@@ -5,226 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#4f46e5">
   <meta name="apple-mobile-web-app-capable" content="yes">
-
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Gabinete Digital</title>
-
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
   <header class="topo">
     <div class="marca">
-      <h1>Gabinete Digital</h1>
-      <p>Cadastro • Saúde • Documentos • Agenda</p>
+      <div>
+        <h1>Gabinete Digital</h1>
+        <p>Gestão de atendimento, demandas, agenda e cidadãos</p>
+      </div>
+      <span class="online"><i></i> Sistema ativo</span>
     </div>
-
     <nav class="menu" aria-label="Menu principal">
-      <button type="button" onclick="mostrarAba('painel')">
-        Painel
-      </button>
-
-      <button type="button" onclick="mostrarAba('pessoas')">
-        Pessoas
-      </button>
-
-      <button type="button" onclick="mostrarAba('cadastro')">
-        Novo cadastro
-      </button>
-
-      <button type="button" onclick="mostrarAba('demandas')">
-        Demandas
-      </button>
-
-      <button type="button" onclick="mostrarAba('agenda')">
-        Agenda
-      </button>
-
-      <button type="button" onclick="mostrarAba('aniversarios')">
-        Aniversários
-      </button>
+      <button type="button" onclick="mostrarAba('painel')">📊 Painel</button>
+      <button type="button" onclick="mostrarAba('pessoas')">👥 Pessoas</button>
+      <button type="button" onclick="mostrarAba('cadastro')">➕ Novo cadastro</button>
+      <button type="button" onclick="mostrarAba('demandas')">📋 Demandas</button>
+      <button type="button" onclick="mostrarAba('agenda')">📅 Agenda</button>
+      <button type="button" onclick="mostrarAba('aniversarios')">🎂 Aniversários</button>
     </nav>
   </header>
 
-
   <main>
-
-    <!-- PAINEL -->
     <section id="painel" class="tab">
-      <h2>Painel</h2>
-
-      <div id="painelConteudo">
-        <div class="card">
-          <h3>Gabinete Digital</h3>
-          <p>Central de atendimento e acompanhamento do gabinete.</p>
-        </div>
-      </div>
+      <div class="titulo-aba"><div><span class="eyebrow">VISÃO GERAL</span><h2>Painel do gabinete</h2></div><button class="btn-secundario" type="button" onclick="mostrarAba('cadastro')">+ Cadastrar cidadão</button></div>
+      <div id="painelConteudo"></div>
+      <div class="card destaque"><h3>Bem-vindo ao Gabinete Digital</h3><p>Cadastre cidadãos e acompanhe cada demanda desde o atendimento até a conclusão.</p></div>
     </section>
 
-
-    <!-- PESSOAS -->
     <section id="pessoas" class="tab">
-
-      <h2>Pessoas</h2>
-
-      <div class="acoes">
-        <button type="button" onclick="imprimirPessoas()">
-          PDF / Imprimir
-        </button>
-      </div>
-
-      <div class="filtros">
-
-        <input
-          id="buscaPessoa"
-          type="search"
-          placeholder="Nome, CPF, telefone..."
-          oninput="render()"
-        >
-
-        <input
-          id="filtroBairro"
-          type="search"
-          placeholder="Bairro"
-          oninput="render()"
-        >
-
-      </div>
-
+      <div class="titulo-aba"><div><span class="eyebrow">ATENDIMENTO</span><h2>Pessoas</h2></div><div class="acoes-topo"><button class="btn-secundario" type="button" onclick="mostrarAba('cadastro')">+ Novo cadastro</button><button type="button" onclick="imprimirPessoas()">🖨️ Imprimir / PDF</button></div></div>
+      <div class="filtros"><input id="buscaPessoa" type="search" placeholder="🔎 Nome, CPF, telefone ou demanda..." oninput="render()"><input id="filtroBairro" type="search" placeholder="📍 Filtrar por bairro" oninput="render()"></div>
       <div id="listaPessoas"></div>
-
     </section>
 
-
-    <!-- NOVO CADASTRO -->
     <section id="cadastro" class="tab">
-
-      <h2>Novo cadastro</h2>
-
+      <div class="titulo-aba"><div><span class="eyebrow">ATENDIMENTO</span><h2>Novo cadastro</h2></div><button class="btn-secundario" type="button" onclick="mostrarAba('pessoas')">← Voltar para pessoas</button></div>
       <form id="formCadastro">
-
-        <div class="campo">
-          <label for="nome">Nome completo</label>
-          <input id="nome" name="nome" type="text" required>
+        <div class="form-grid">
+          <div class="campo campo-grande"><label for="nome">Nome completo *</label><input id="nome" name="nome" type="text" required placeholder="Nome do cidadão"></div>
+          <div class="campo"><label for="mae">Nome da mãe</label><input id="mae" name="mae" type="text"></div>
+          <div class="campo"><label for="nascimento">Data de nascimento</label><input id="nascimento" name="nascimento" type="date"></div>
+          <div class="campo"><label for="cpf">CPF</label><input id="cpf" name="cpf" type="text" inputmode="numeric" placeholder="000.000.000-00"></div>
+          <div class="campo"><label for="sus">Cartão SUS</label><input id="sus" name="sus" type="text" inputmode="numeric"></div>
+          <div class="campo"><label for="telefone">Telefone / WhatsApp</label><input id="telefone" name="telefone" type="tel" placeholder="(91) 99999-9999"></div>
+          <div class="campo"><label for="bairro">Bairro / Comunidade</label><input id="bairro" name="bairro" type="text"></div>
+          <div class="campo campo-grande"><label for="endereco">Endereço</label><input id="endereco" name="endereco" type="text"></div>
+          <div class="campo campo-grande"><label for="demanda">Demanda *</label><input id="demanda" name="demanda" type="text" placeholder="Ex.: consulta, iluminação, documentação..." required></div>
+          <div class="campo"><label for="tipoDemanda">Tipo de demanda *</label><select id="tipoDemanda" name="tipoDemanda" required><option value="">Selecione</option><option value="Saúde">Saúde</option><option value="Educação">Educação</option><option value="Assistência Social">Assistência Social</option><option value="Infraestrutura">Infraestrutura</option><option value="Emprego">Emprego</option><option value="Documentação">Documentação</option><option value="Transporte">Transporte</option><option value="Habitação">Habitação</option><option value="Outro">Outro</option></select></div>
+          <div class="campo campo-grande"><label for="procedimento">Procedimento / Serviço</label><input id="procedimento" name="procedimento" type="text" placeholder="Detalhe do serviço solicitado"></div>
+          <div class="campo"><label for="status">Status</label><select id="status" name="status"><option value="Pendente">Pendente</option><option value="Em andamento">Em andamento</option><option value="Concluído">Concluído</option></select></div>
         </div>
-
-        <div class="campo">
-          <label for="mae">Nome da mãe</label>
-          <input id="mae" name="mae" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="nascimento">Data de nascimento</label>
-          <input id="nascimento" name="nascimento" type="date">
-        </div>
-
-        <div class="campo">
-          <label for="cpf">CPF</label>
-          <input id="cpf" name="cpf" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="sus">Cartão SUS</label>
-          <input id="sus" name="sus" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="telefone">Telefone / WhatsApp</label>
-          <input id="telefone" name="telefone" type="tel">
-        </div>
-
-        <div class="campo">
-          <label for="bairro">Bairro</label>
-          <input id="bairro" name="bairro" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="endereco">Endereço</label>
-          <input id="endereco" name="endereco" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="demanda">Demanda</label>
-          <input id="demanda" name="demanda" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="tipoDemanda">Tipo de demanda</label>
-
-          <select id="tipoDemanda" name="tipoDemanda">
-            <option value="">Selecione</option>
-            <option value="Saúde">Saúde</option>
-            <option value="Educação">Educação</option>
-            <option value="Assistência Social">Assistência Social</option>
-            <option value="Infraestrutura">Infraestrutura</option>
-            <option value="Emprego">Emprego</option>
-            <option value="Documentação">Documentação</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Habitação">Habitação</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label for="procedimento">Procedimento / Serviço</label>
-          <input id="procedimento" name="procedimento" type="text">
-        </div>
-
-        <div class="campo">
-          <label for="status">Status</label>
-
-          <select id="status" name="status">
-            <option value="Pendente">Pendente</option>
-            <option value="Em andamento">Em andamento</option>
-            <option value="Concluído">Concluído</option>
-          </select>
-        </div>
-
-        <button type="submit">
-          Salvar cadastro
-        </button>
-
+        <div class="form-acoes"><button type="button" class="btn-cancelar" onclick="cancelarEdicao()">Limpar</button><button type="submit">Salvar cadastro</button></div>
       </form>
-
     </section>
 
+    <section id="demandas" class="tab"><div class="titulo-aba"><div><span class="eyebrow">ACOMPANHAMENTO</span><h2>Demandas</h2></div></div><div id="listaDemandas"></div></section>
 
-    <!-- DEMANDAS -->
-    <section id="demandas" class="tab">
-
-      <h2>Demandas</h2>
-
-      <div id="listaDemandas"></div>
-
-    </section>
-
-
-    <!-- AGENDA -->
     <section id="agenda" class="tab">
-
-      <h2>Agenda</h2>
-
+      <div class="titulo-aba"><div><span class="eyebrow">ORGANIZAÇÃO</span><h2>Agenda</h2></div></div>
+      <form id="formAgenda" class="form-agenda">
+        <div class="form-grid">
+          <div class="campo campo-grande"><label for="agendaAssunto">Compromisso *</label><input id="agendaAssunto" name="assunto" required placeholder="Ex.: Reunião com moradores"></div>
+          <div class="campo"><label for="agendaData">Data *</label><input id="agendaData" name="data" type="date" required></div>
+          <div class="campo"><label for="agendaHora">Horário</label><input id="agendaHora" name="hora" type="time"></div>
+          <div class="campo"><label for="agendaTipo">Tipo</label><select id="agendaTipo" name="tipo"><option value="Reunião">Reunião</option><option value="Atendimento">Atendimento</option><option value="Evento">Evento</option><option value="Visita">Visita</option><option value="Outro">Outro</option></select></div>
+          <div class="campo"><label for="agendaStatus">Status</label><select id="agendaStatus" name="status"><option value="Pendente">Pendente</option><option value="Concluído">Concluído</option></select></div>
+        </div>
+        <button type="submit">+ Adicionar à agenda</button>
+      </form>
       <div id="listaAgenda"></div>
-
     </section>
 
-
-    <!-- ANIVERSÁRIOS -->
-    <section id="aniversarios" class="tab">
-
-      <h2>Aniversários</h2>
-
-      <div id="listaAniversarios"></div>
-
-    </section>
-
+    <section id="aniversarios" class="tab"><div class="titulo-aba"><div><span class="eyebrow">RELACIONAMENTO</span><h2>Aniversários</h2></div></div><div class="card destaque"><p>Os próximos aniversários são calculados automaticamente a partir dos cadastros.</p></div><div id="listaAniversarios"></div></section>
   </main>
-
-
   <script src="app.js"></script>
-
- 
-
 </body>
 </html>
