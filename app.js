@@ -5,18 +5,30 @@ let db = JSON.parse(
   '{"people":[],"agenda":[]}'
 );
 
+db.people = Array.isArray(db.people) ? db.people : [];
+db.agenda = Array.isArray(db.agenda) ? db.agenda : [];
+
 const $ = (selector) => document.querySelector(selector);
+
+/* =========================
+   SALVAMENTO
+========================= */
 
 function save() {
   localStorage.setItem(KEY, JSON.stringify(db));
+
   render();
   renderDemandas();
   renderAgenda();
   renderBirthdays();
 }
 
+/* =========================
+   SEGURANÇA HTML
+========================= */
+
 function esc(value) {
-  return String(value || '').replace(/[&<>"']/g, (m) => ({
+  return String(value ?? '').replace(/[&<>"']/g, (m) => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -24,28 +36,6 @@ function esc(value) {
     "'": '&#039;'
   }[m]));
 }
-
-/* =========================
-   NAVEGAÇÃO
-========================= */
-
-document.querySelectorAll('nav button').forEach((button) => {
-  button.onclick = () => {
-    document.querySelectorAll('.tab').forEach((tab) => {
-      tab.style.display = 'none';
-    });
-
-    const target = $('#' + button.dataset.t);
-
-    if (target) {
-      target.style.display = 'block';
-    }
-
-    if (button.dataset.t === 'painel') {
-      renderBirthdays();
-    }
-  };
-});
 
 /* =========================
    WHATSAPP
@@ -133,176 +123,236 @@ function birth(person) {
 }
 
 /* =========================
-   CADASTRO DE PESSOA
+   NOVO CADASTRO
 ========================= */
 
-$('#form').onsubmit = (event) => {
-  event.preventDefault();
+const formCadastro = $('#formCadastro');
 
-  const person = Object.fromEntries(
-    new FormData(event.target)
-  );
+if (formCadastro) {
+  formCadastro.addEventListener('submit', function(event) {
+    event.preventDefault();
 
-  person.id =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Date.now().toString();
+    const person = Object.fromEntries(
+      new FormData(event.target)
+    );
 
-  /* GARANTE OS CAMPOS DE DEMANDA */
-  person.demanda = person.demanda || '';
-  person.tipo = person.tipo || '';
-  person.status = person.status || 'Pendente';
+    person.id =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString();
 
-  db.people.unshift(person);
+    /*
+      O HTML usa "tipoDemanda".
+      Também salvamos como "tipo" para manter
+      compatibilidade com cadastros antigos.
+    */
 
-  event.target.reset();
+    person.demanda = person.demanda || '';
+    person.tipoDemanda = person.tipoDemanda || '';
+    person.tipo = person.tipoDemanda || '';
+    person.status = person.status || 'Pendente';
 
-  save();
+    db.people.unshift(person);
 
-  alert('Cadastro salvo com sucesso!');
+    event.target.reset();
 
-  const peopleButton =
-    document.querySelector('[data-t="pessoas"]');
+    save();
 
-  if (peopleButton) {
-    peopleButton.click();
-  }
-};
+    alert('Cadastro salvo com sucesso!');
 
-/* =========================
-   AGENDA
-========================= */
-
-$('#agendaForm').onsubmit = (event) => {
-  event.preventDefault();
-
-  const appointment = Object.fromEntries(
-    new FormData(event.target)
-  );
-
-  appointment.id =
-    typeof crypto !== 'undefined' && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Date.now().toString();
-
-  appointment.status =
-    appointment.status || 'Pendente';
-
-  db.agenda.push(appointment);
-
-  event.target.reset();
-
-  save();
-
-  alert('Compromisso agendado com sucesso!');
-};
+    if (typeof mostrarAba === 'function') {
+      mostrarAba('pessoas');
+    }
+  });
+}
 
 /* =========================
    PESSOAS
 ========================= */
 
 function render() {
-  const query =
-    ($('#q')?.value || '').toLowerCase().trim();
+  const busca =
+    ($('#buscaPessoa')?.value || '')
+      .toLowerCase()
+      .trim();
 
   const bairro =
-    ($('#bairro')?.value || '').toLowerCase().trim();
+    ($('#filtroBairro')?.value || '')
+      .toLowerCase()
+      .trim();
 
-  const people = db.people.filter((person) => {
+  const pessoas = db.people.filter((person) => {
 
-    const searchText = [
+    const texto = [
       person.nome,
+      person.mae,
       person.cpf,
-      person.telefone,
       person.sus,
+      person.telefone,
+      person.bairro,
+      person.endereco,
       person.demanda,
+      person.tipoDemanda,
       person.tipo,
-      person.status,
-      person.bairro
+      person.procedimento,
+      person.status
     ]
       .join(' ')
       .toLowerCase();
 
     const personBairro =
-      (person.bairro || '').toLowerCase();
+      String(person.bairro || '')
+        .toLowerCase();
 
     return (
-      (!query || searchText.includes(query)) &&
+      (!busca || texto.includes(busca)) &&
       (!bairro || personBairro.includes(bairro))
     );
   });
 
-  const container = $('#people');
+  const container = $('#listaPessoas');
 
   if (!container) return;
 
   container.innerHTML =
-    people.map((person) => `
-      <div class="item">
-        <div>
-          <b>${esc(person.nome)}</b>
+    pessoas.map((person) => {
 
-          <div class="muted">
+      const tipo =
+        person.tipoDemanda ||
+        person.tipo ||
+        'Não informado';
+
+      return `
+        <div class="card">
+
+          <h3>${esc(person.nome)}</h3>
+
+          <p>
             ${esc(person.bairro || 'Bairro não informado')}
             •
             ${esc(person.telefone || 'Telefone não informado')}
-          </div>
+          </p>
 
-          <div>
-            <b>Demanda:</b>
+          <p>
+            <strong>Demanda:</strong>
             ${esc(person.demanda || 'Não informada')}
-          </div>
+          </p>
 
-          <div>
-            <b>Tipo:</b>
-            ${esc(person.tipo || 'Não informado')}
-          </div>
+          <p>
+            <strong>Tipo:</strong>
+            ${esc(tipo)}
+          </p>
 
-          <div>
-            <span class="badge">
-              ${esc(person.status || 'Pendente')}
-            </span>
-          </div>
+          ${
+            person.procedimento
+              ? `
+                <p>
+                  <strong>Procedimento:</strong>
+                  ${esc(person.procedimento)}
+                </p>
+              `
+              : ''
+          }
+
+          <p>
+            <strong>Status:</strong>
+            ${esc(person.status || 'Pendente')}
+          </p>
+
+          ${
+            person.cpf
+              ? `<p><strong>CPF:</strong> ${esc(person.cpf)}</p>`
+              : ''
+          }
+
+          ${
+            person.sus
+              ? `<p><strong>SUS:</strong> ${esc(person.sus)}</p>`
+              : ''
+          }
+
+          ${
+            person.endereco
+              ? `<p><strong>Endereço:</strong> ${esc(person.endereco)}</p>`
+              : ''
+          }
+
+          ${
+            person.telefone
+              ? `
+                <button
+                  type="button"
+                  onclick="wa(
+                    '${esc(person.telefone)}',
+                    'Olá, ${esc(person.nome)}!'
+                  )"
+                >
+                  WhatsApp
+                </button>
+              `
+              : ''
+          }
+
         </div>
-
-        <button
-          onclick="wa(
-            '${esc(person.telefone)}',
-            'Olá, ${esc(person.nome)}!'
-          )"
-        >
-          WhatsApp
-        </button>
-      </div>
-    `).join('') ||
+      `;
+    }).join('') ||
     `
-      <div class="panel">
-        Nenhum cadastro encontrado.
+      <div class="card">
+        <p>Nenhum cadastro encontrado.</p>
       </div>
     `;
 
-  $('#nP').textContent = db.people.length;
+  atualizarPainel();
+}
 
-  $('#nD').textContent =
-    db.people.filter(
-      (person) =>
-        !['Resolvida', 'Arquivada'].includes(
-          person.status
-        )
-    ).length;
+/* =========================
+   PAINEL
+========================= */
 
-  $('#nA').textContent =
-    db.agenda.filter(
-      (appointment) =>
-        appointment.status === 'Pendente'
-    ).length;
+function atualizarPainel() {
+  const painel = $('#painelConteudo');
 
-  $('#nB').textContent =
-    db.people.filter(
-      (person) => birth(person)
-    ).length;
+  if (!painel) return;
 
-  renderBirthdaysPanel();
+  const total = db.people.length;
+
+  const pendentes = db.people.filter(
+    (p) => (p.status || 'Pendente') === 'Pendente'
+  ).length;
+
+  const andamento = db.people.filter(
+    (p) => p.status === 'Em andamento'
+  ).length;
+
+  const concluidos = db.people.filter(
+    (p) => p.status === 'Concluído'
+  ).length;
+
+  painel.innerHTML = `
+    <div class="card">
+      <h3>Resumo do gabinete</h3>
+
+      <p>
+        <strong>${total}</strong>
+        pessoas cadastradas
+      </p>
+
+      <p>
+        <strong>${pendentes}</strong>
+        demandas pendentes
+      </p>
+
+      <p>
+        <strong>${andamento}</strong>
+        demandas em andamento
+      </p>
+
+      <p>
+        <strong>${concluidos}</strong>
+        demandas concluídas
+      </p>
+    </div>
+  `;
 }
 
 /* =========================
@@ -310,79 +360,82 @@ function render() {
 ========================= */
 
 function renderDemandas() {
-  const query =
-    ($('#proc')?.value || '').toLowerCase().trim();
-
-  const bairro =
-    ($('#procB')?.value || '').toLowerCase().trim();
-
-  const status =
-    $('#procS')?.value || '';
-
-  const demands = db.people.filter((person) => {
-
-    const demanda = (
-      (person.demanda || '') +
-      ' ' +
-      (person.tipo || '') +
-      ' ' +
-      (person.nome || '')
-    ).toLowerCase();
-
-    const personBairro =
-      (person.bairro || '').toLowerCase();
-
-    return (
-      (!query || demanda.includes(query)) &&
-      (!bairro || personBairro.includes(bairro)) &&
-      (!status || person.status === status)
-    );
-  });
-
-  const container = $('#demands');
+  const container = $('#listaDemandas');
 
   if (!container) return;
 
+  const demandas = db.people.filter(
+    (person) => person.demanda
+  );
+
   container.innerHTML =
-    demands.map((person) => `
-      <div class="item">
+    demandas.map((person) => {
 
-        <div>
-          <b>
-            ${esc(person.demanda || 'Sem demanda')}
-          </b>
+      const tipo =
+        person.tipoDemanda ||
+        person.tipo ||
+        'Não informado';
 
-          <div>
-            <b>Tipo:</b>
-            ${esc(person.tipo || 'Tipo não informado')}
-          </div>
+      return `
+        <div class="card">
 
-          <div>
-            <b>Pessoa:</b>
+          <h3>
+            ${esc(person.demanda)}
+          </h3>
+
+          <p>
+            <strong>Pessoa:</strong>
             ${esc(person.nome)}
-          </div>
+          </p>
 
-          <div>
-            <b>Bairro:</b>
-            ${esc(person.bairro || 'Bairro não informado')}
-          </div>
+          <p>
+            <strong>Tipo:</strong>
+            ${esc(tipo)}
+          </p>
 
-          <div class="muted">
-            ${esc(person.telefone || 'Telefone não informado')}
-            •
-            ${esc(person.referencia || 'Sem referência')}
-          </div>
+          <p>
+            <strong>Bairro:</strong>
+            ${esc(person.bairro || 'Não informado')}
+          </p>
+
+          ${
+            person.procedimento
+              ? `
+                <p>
+                  <strong>Procedimento:</strong>
+                  ${esc(person.procedimento)}
+                </p>
+              `
+              : ''
+          }
+
+          <p>
+            <strong>Status:</strong>
+            ${esc(person.status || 'Pendente')}
+          </p>
+
+          ${
+            person.telefone
+              ? `
+                <button
+                  type="button"
+                  onclick="wa(
+                    '${esc(person.telefone)}',
+                    'Olá, ${esc(person.nome)}! Estou entrando em contato sobre sua demanda: ${esc(person.demanda)}.'
+                  )"
+                >
+                  WhatsApp
+                </button>
+              `
+              : ''
+          }
+
         </div>
-
-        <span class="badge">
-          ${esc(person.status || 'Pendente')}
-        </span>
-
-      </div>
-    `).join('') ||
+      `;
+    }).join('') ||
     `
-      <div class="panel">
-        Nenhuma demanda encontrada.
+      <div class="card">
+        <p>Nenhuma demanda cadastrada.</p>
       </div>
     `;
 }
@@ -392,55 +445,56 @@ function renderDemandas() {
 ========================= */
 
 function renderAgenda() {
-  const appointments = [...db.agenda].sort(
-    (a, b) =>
-      ((a.data || '') + (a.hora || ''))
-        .localeCompare(
-          (b.data || '') + (b.hora || '')
-        )
-  );
-
-  const container = $('#agendaList');
+  const container = $('#listaAgenda');
 
   if (!container) return;
 
-  container.innerHTML =
-    appointments.map((appointment) => `
-      <div class="item">
-
-        <div>
-          <b>
-            ${esc(appointment.assunto)}
-          </b>
-
-          <div>
-            ${esc(appointment.data)}
-            às
-            ${esc(appointment.hora)}
-            •
-            ${esc(appointment.tipo)}
-          </div>
-
-          <div class="muted">
-            Responsável:
-            ${esc(
-              appointment.responsavel ||
-              'Não informado'
-            )}
-          </div>
-        </div>
-
-        <span class="badge">
-          ${esc(appointment.status || 'Pendente')}
-        </span>
-
-      </div>
-    `).join('') ||
-    `
-      <div class="panel">
-        Agenda vazia.
+  if (!db.agenda.length) {
+    container.innerHTML = `
+      <div class="card">
+        <h3>Agenda</h3>
+        <p>Nenhum compromisso cadastrado.</p>
       </div>
     `;
+    return;
+  }
+
+  const agenda = [...db.agenda].sort(
+    (a, b) =>
+      String(a.data || '')
+        .localeCompare(String(b.data || ''))
+  );
+
+  container.innerHTML =
+    agenda.map((item) => `
+      <div class="card">
+
+        <h3>
+          ${esc(item.assunto || 'Compromisso')}
+        </h3>
+
+        <p>
+          ${esc(item.data || '')}
+          ${
+            item.hora
+              ? ` às ${esc(item.hora)}`
+              : ''
+          }
+        </p>
+
+        ${
+          item.tipo
+            ? `<p><strong>Tipo:</strong> ${esc(item.tipo)}</p>`
+            : ''
+        }
+
+        <p>
+          <strong>Status:</strong>
+          ${esc(item.status || 'Pendente')}
+        </p>
+
+      </div>
+    `).join('');
 }
 
 /* =========================
@@ -458,85 +512,46 @@ function getBirthdays() {
 }
 
 function renderBirthdays() {
+  const container = $('#listaAniversarios');
+
+  if (!container) return;
+
   const birthdays = getBirthdays();
 
-  const container = $('#birthdays');
-
-  if (!container) return;
-
   container.innerHTML =
     birthdays.map((item) => `
-      <div class="item">
+      <div class="card">
 
-        <div>
-          <b>
-            ${esc(item.person.nome)}
-          </b>
+        <h3>
+          ${esc(item.person.nome)}
+        </h3>
 
-          <div>
-            ${item.date.toLocaleDateString('pt-BR')}
-            •
-            ${esc(
-              item.person.telefone ||
-              'Telefone não informado'
-            )}
-          </div>
-        </div>
+        <p>
+          Aniversário:
+          ${item.date.toLocaleDateString('pt-BR')}
+        </p>
 
-        <button
-          onclick="wa(
-            '${esc(item.person.telefone)}',
-            'Parabéns, ${esc(item.person.nome)}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!'
-          )"
-        >
-          Felicitações
-        </button>
+        ${
+          item.person.telefone
+            ? `
+              <button
+                type="button"
+                onclick="wa(
+                  '${esc(item.person.telefone)}',
+                  'Parabéns, ${esc(item.person.nome)}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!'
+                )"
+              >
+                Enviar felicitações pelo WhatsApp
+              </button>
+            `
+            : ''
+        }
 
       </div>
     `).join('') ||
     `
-      <div class="panel">
-        Nenhum aniversário cadastrado.
-      </div>
-    `;
-}
-
-/* =========================
-   ANIVERSÁRIOS NO PAINEL
-========================= */
-
-function renderBirthdaysPanel() {
-  const container = $('#bp');
-
-  if (!container) return;
-
-  const birthdays =
-    getBirthdays().slice(0, 5);
-
-  container.innerHTML =
-    birthdays.map((item) => `
-      <div class="item">
-
-        <div>
-          <b>
-            ${esc(item.person.nome)}
-          </b>
-
-          <div class="muted">
-            ${item.date.toLocaleDateString('pt-BR')}
-            •
-            ${esc(
-              item.person.telefone ||
-              'Sem telefone'
-            )}
-          </div>
-        </div>
-
-      </div>
-    `).join('') ||
-    `
-      <div class="muted">
-        Nenhum aniversário cadastrado.
+      <div class="card">
+        <p>Nenhum aniversário cadastrado.</p>
       </div>
     `;
 }
@@ -545,18 +560,47 @@ function renderBirthdaysPanel() {
    FILTROS
 ========================= */
 
-$('#q')?.addEventListener('input', render);
-$('#bairro')?.addEventListener('input', render);
+$('#buscaPessoa')?.addEventListener(
+  'input',
+  render
+);
 
-$('#proc')?.addEventListener('input', renderDemandas);
-$('#procB')?.addEventListener('input', renderDemandas);
-$('#procS')?.addEventListener('change', renderDemandas);
+$('#filtroBairro')?.addEventListener(
+  'input',
+  render
+);
+
+/* =========================
+   IMPRESSÃO
+========================= */
+
+window.imprimirPessoas = function() {
+  window.print();
+};
 
 /* =========================
    INICIALIZAÇÃO
 ========================= */
 
-render();
-renderDemandas();
-renderAgenda();
-renderBirthdays();
+document.addEventListener(
+  'DOMContentLoaded',
+  function() {
+
+    render();
+    renderDemandas();
+    renderAgenda();
+    renderBirthdays();
+    atualizarPainel();
+
+  }
+);
+
+/* =========================
+   COMPATIBILIDADE
+========================= */
+
+window.render = render;
+window.renderDemandas = renderDemandas;
+window.renderAgenda = renderAgenda;
+window.renderBirthdays = renderBirthdays;
+window.wa = wa;
