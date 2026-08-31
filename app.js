@@ -27,10 +27,7 @@ function birth(person) {
   if (!value) return null;
   let day, month, year, match = value.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
   if (match) { day=Number(match[1]); month=Number(match[2]); year=Number(match[3]); }
-  if (!match) {
-    match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (match) { year=Number(match[1]); month=Number(match[2]); day=Number(match[3]); }
-  }
+  if (!match) { match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (match) { year=Number(match[1]); month=Number(match[2]); day=Number(match[3]); } }
   if (!day || !month || !year) return null;
   const now = new Date();
   let date = new Date(now.getFullYear(), month - 1, day);
@@ -38,6 +35,20 @@ function birth(person) {
   if (date < today) date.setFullYear(date.getFullYear() + 1);
   return date;
 }
+
+/* =========================
+   NAVEGAÇÃO
+========================= */
+window.mostrarAba = function(nome) {
+  document.querySelectorAll('.tab').forEach((aba) => aba.style.display = 'none');
+  const aba = document.getElementById(nome);
+  if (aba) aba.style.display = 'block';
+  if (nome === 'pessoas') render();
+  if (nome === 'demandas') renderDemandas();
+  if (nome === 'agenda') renderAgenda();
+  if (nome === 'aniversarios') renderBirthdays();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+};
 
 /* =========================
    NOVO CADASTRO / EDIÇÃO
@@ -68,7 +79,7 @@ if (formCadastro) {
       save();
       alert('Cadastro salvo com sucesso!');
     }
-    if (typeof mostrarAba === 'function') mostrarAba('pessoas');
+    mostrarAba('pessoas');
   });
 }
 
@@ -78,18 +89,10 @@ window.verCadastro = function(id) {
   const tipo = person.tipoDemanda || person.tipo || 'Não informado';
   const nascimento = person.nascimento ? new Date(person.nascimento + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informado';
   alert([
-    `NOME: ${person.nome || 'Não informado'}`,
-    `MÃE: ${person.mae || 'Não informado'}`,
-    `NASCIMENTO: ${nascimento}`,
-    `CPF: ${person.cpf || 'Não informado'}`,
-    `SUS: ${person.sus || 'Não informado'}`,
-    `TELEFONE: ${person.telefone || 'Não informado'}`,
-    `BAIRRO: ${person.bairro || 'Não informado'}`,
-    `ENDEREÇO: ${person.endereco || 'Não informado'}`,
-    `DEMANDA: ${person.demanda || 'Não informada'}`,
-    `TIPO DE DEMANDA: ${tipo}`,
-    `PROCEDIMENTO / SERVIÇO: ${person.procedimento || 'Não informado'}`,
-    `STATUS: ${person.status || 'Pendente'}`
+    `NOME: ${person.nome || 'Não informado'}`, `MÃE: ${person.mae || 'Não informado'}`, `NASCIMENTO: ${nascimento}`,
+    `CPF: ${person.cpf || 'Não informado'}`, `SUS: ${person.sus || 'Não informado'}`, `TELEFONE: ${person.telefone || 'Não informado'}`,
+    `BAIRRO: ${person.bairro || 'Não informado'}`, `ENDEREÇO: ${person.endereco || 'Não informado'}`, `DEMANDA: ${person.demanda || 'Não informada'}`,
+    `TIPO DE DEMANDA: ${tipo}`, `PROCEDIMENTO / SERVIÇO: ${person.procedimento || 'Não informado'}`, `STATUS: ${person.status || 'Pendente'}`
   ].join('\n'));
 };
 
@@ -104,8 +107,7 @@ window.editarCadastro = function(id) {
   if (formCadastro.elements.tipoDemanda) formCadastro.elements.tipoDemanda.value = person.tipoDemanda || person.tipo || '';
   const botao = formCadastro.querySelector('button[type="submit"]');
   if (botao) botao.textContent = 'Atualizar cadastro';
-  if (typeof mostrarAba === 'function') mostrarAba('cadastro');
-  window.scrollTo({top:0, behavior:'smooth'});
+  mostrarAba('cadastro');
 };
 
 window.cancelarEdicao = function() {
@@ -139,24 +141,7 @@ function render() {
   if (!container) return;
   container.innerHTML = pessoas.map((person) => {
     const tipo = person.tipoDemanda || person.tipo || 'Não informado';
-    return `
-      <div class="card">
-        <h3>${esc(person.nome)}</h3>
-        <p>${esc(person.bairro || 'Bairro não informado')} • ${esc(person.telefone || 'Telefone não informado')}</p>
-        <p><strong>Demanda:</strong> ${esc(person.demanda || 'Não informada')}</p>
-        <p><strong>Tipo:</strong> ${esc(tipo)}</p>
-        ${person.procedimento ? `<p><strong>Procedimento:</strong> ${esc(person.procedimento)}</p>` : ''}
-        <p><strong>Status:</strong> ${esc(person.status || 'Pendente')}</p>
-        ${person.cpf ? `<p><strong>CPF:</strong> ${esc(person.cpf)}</p>` : ''}
-        ${person.sus ? `<p><strong>SUS:</strong> ${esc(person.sus)}</p>` : ''}
-        ${person.endereco ? `<p><strong>Endereço:</strong> ${esc(person.endereco)}</p>` : ''}
-        <div class="acoes">
-          <button type="button" onclick="verCadastro('${esc(person.id)}')">Ver cadastro</button>
-          <button type="button" onclick="editarCadastro('${esc(person.id)}')">Editar</button>
-          <button type="button" onclick="excluirCadastro('${esc(person.id)}')">Excluir</button>
-          ${person.telefone ? `<button type="button" onclick="wa('${esc(person.telefone)}','Olá, ${esc(person.nome)}!')">WhatsApp</button>` : ''}
-        </div>
-      </div>`;
+    return `<div class="card"><h3>${esc(person.nome)}</h3><p>${esc(person.bairro || 'Bairro não informado')} • ${esc(person.telefone || 'Telefone não informado')}</p><p><strong>Demanda:</strong> ${esc(person.demanda || 'Não informada')}</p><p><strong>Tipo:</strong> ${esc(tipo)}</p>${person.procedimento ? `<p><strong>Procedimento:</strong> ${esc(person.procedimento)}</p>` : ''}<p><strong>Status:</strong> ${esc(person.status || 'Pendente')}</p>${person.cpf ? `<p><strong>CPF:</strong> ${esc(person.cpf)}</p>` : ''}${person.sus ? `<p><strong>SUS:</strong> ${esc(person.sus)}</p>` : ''}${person.endereco ? `<p><strong>Endereço:</strong> ${esc(person.endereco)}</p>` : ''}<div class="acoes"><button type="button" onclick="verCadastro('${esc(person.id)}')">Ver cadastro</button><button type="button" onclick="editarCadastro('${esc(person.id)}')">Editar</button><button type="button" onclick="excluirCadastro('${esc(person.id)}')">Excluir</button>${person.telefone ? `<button type="button" onclick="wa('${esc(person.telefone)}','Olá, ${esc(person.nome)}!')">WhatsApp</button>` : ''}</div></div>`;
   }).join('') || `<div class="card"><p>Nenhum cadastro encontrado.</p></div>`;
   atualizarPainel();
 }
@@ -189,13 +174,9 @@ function renderAgenda() {
   container.innerHTML = agenda.map((item) => `<div class="card"><h3>${esc(item.assunto || 'Compromisso')}</h3><p>${esc(item.data || '')}${item.hora ? ` às ${esc(item.hora)}` : ''}</p>${item.tipo ? `<p><strong>Tipo:</strong> ${esc(item.tipo)}</p>` : ''}<p><strong>Status:</strong> ${esc(item.status || 'Pendente')}</p></div>`).join('');
 }
 
-function getBirthdays() {
-  return db.people.map((person) => ({person,date:birth(person)})).filter((item) => item.date).sort((a,b) => a.date - b.date);
-}
-
+function getBirthdays() { return db.people.map((person) => ({person,date:birth(person)})).filter((item) => item.date).sort((a,b) => a.date - b.date); }
 function renderBirthdays() {
-  const container = $('#listaAniversarios');
-  if (!container) return;
+  const container = $('#listaAniversarios'); if (!container) return;
   const birthdays = getBirthdays();
   container.innerHTML = birthdays.map((item) => `<div class="card"><h3>${esc(item.person.nome)}</h3><p>Aniversário: ${item.date.toLocaleDateString('pt-BR')}</p>${item.person.telefone ? `<button type="button" onclick="wa('${esc(item.person.telefone)}','Parabéns, ${esc(item.person.nome)}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!')">Enviar felicitações pelo WhatsApp</button>` : ''}</div>`).join('') || `<div class="card"><p>Nenhum aniversário cadastrado.</p></div>`;
 }
@@ -204,7 +185,7 @@ $('#buscaPessoa')?.addEventListener('input', render);
 $('#filtroBairro')?.addEventListener('input', render);
 window.imprimirPessoas = function() { window.print(); };
 
-document.addEventListener('DOMContentLoaded', function() { render(); renderDemandas(); renderAgenda(); renderBirthdays(); atualizarPainel(); });
+document.addEventListener('DOMContentLoaded', function() { render(); renderDemandas(); renderAgenda(); renderBirthdays(); atualizarPainel(); mostrarAba('painel'); });
 window.render = render;
 window.renderDemandas = renderDemandas;
 window.renderAgenda = renderAgenda;
