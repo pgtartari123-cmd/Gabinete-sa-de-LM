@@ -6,6 +6,7 @@
  * - autentica no Supabase Auth;
  * - carrega cidadaos/demandas/agenda para o armazenamento local ao abrir;
  * - sincroniza alterações feitas pela aplicação para o Supabase;
+ * - preserva dados locais existentes na primeira conexão quando o banco remoto estiver vazio;
  * - nunca usa service_role key no navegador.
  */
 (function () {
@@ -24,45 +25,28 @@
   let bootstrapping = false;
 
   function getConfig() {
-    try {
-      return JSON.parse(rawGet.call(localStorage, CFG_KEY) || 'null');
-    } catch (_) {
-      return null;
-    }
+    try { return JSON.parse(rawGet.call(localStorage, CFG_KEY) || 'null'); }
+    catch (_) { return null; }
   }
 
-  function setConfig(value) {
-    rawSet.call(localStorage, CFG_KEY, JSON.stringify(value));
-  }
+  function setConfig(value) { rawSet.call(localStorage, CFG_KEY, JSON.stringify(value)); }
 
   function getSession() {
-    try {
-      return JSON.parse(rawGet.call(localStorage, SESSION_KEY) || 'null');
-    } catch (_) {
-      return null;
-    }
+    try { return JSON.parse(rawGet.call(localStorage, SESSION_KEY) || 'null'); }
+    catch (_) { return null; }
   }
 
-  function setSession(value) {
-    rawSet.call(localStorage, SESSION_KEY, JSON.stringify(value));
-  }
-
-  function clearSession() {
-    rawRemove.call(localStorage, SESSION_KEY);
-  }
-
-  function normalizeUrl(url) {
-    return String(url || '').trim().replace(/\/+$/, '');
-  }
+  function setSession(value) { rawSet.call(localStorage, SESSION_KEY, JSON.stringify(value)); }
+  function clearSession() { rawRemove.call(localStorage, SESSION_KEY); }
+  function normalizeUrl(url) { return String(url || '').trim().replace(/\/+$/, ''); }
 
   function uuid() {
-    return (crypto && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-          const r = Math.random() * 16 | 0;
-          const v = c === 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 
   function isUuid(value) {
@@ -108,18 +92,11 @@
 
     const response = await fetch(normalizeUrl(cfg.url) + '/auth/v1/token?grant_type=refresh_token', {
       method: 'POST',
-      headers: {
-        apikey: cfg.anonKey,
-        'Content-Type': 'application/json'
-      },
+      headers: { apikey: cfg.anonKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: old.refresh_token })
     });
 
-    if (!response.ok) {
-      clearSession();
-      return null;
-    }
-
+    if (!response.ok) { clearSession(); return null; }
     const data = await response.json();
     setSession(data);
     return data;
@@ -131,10 +108,7 @@
 
     const response = await fetch(normalizeUrl(cfg.url) + '/auth/v1/token?grant_type=password', {
       method: 'POST',
-      headers: {
-        apikey: cfg.anonKey,
-        'Content-Type': 'application/json'
-      },
+      headers: { apikey: cfg.anonKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email.trim(), password })
     });
 
@@ -151,10 +125,7 @@
       if (cfg && session && session.access_token) {
         await fetch(normalizeUrl(cfg.url) + '/auth/v1/logout', {
           method: 'POST',
-          headers: {
-            apikey: cfg.anonKey,
-            Authorization: 'Bearer ' + session.access_token
-          }
+          headers: { apikey: cfg.anonKey, Authorization: 'Bearer ' + session.access_token }
         });
       }
     } catch (_) {}
@@ -168,14 +139,10 @@
       data.people = Array.isArray(data.people) ? data.people : [];
       data.agenda = Array.isArray(data.agenda) ? data.agenda : [];
       return data;
-    } catch (_) {
-      return { people: [], agenda: [] };
-    }
+    } catch (_) { return { people: [], agenda: [] }; }
   }
 
-  function writeLocal(data) {
-    rawSet.call(localStorage, DB_KEY, JSON.stringify(data));
-  }
+  function writeLocal(data) { rawSet.call(localStorage, DB_KEY, JSON.stringify(data)); }
 
   function mapRemote(cidadaos, demandas, agenda) {
     const demandaPorCidadao = {};
@@ -184,32 +151,29 @@
       demandaPorCidadao[d.cidadao_id].push(d);
     });
 
-    const people = (cidadaos || []).map(function (c) {
-      const ds = demandaPorCidadao[c.id] || [];
-      const d = ds[0] || null;
-      return {
-        id: c.id,
-        nome: c.nome || '',
-        mae: c.nome_mae || '',
-        nascimento: c.data_nascimento || '',
-        cpf: c.cpf || '',
-        sus: c.cartao_sus || '',
-        telefone: c.telefone || '',
-        bairro: c.bairro || '',
-        endereco: c.endereco || '',
-        observacoes: c.observacoes || '',
-        demanda: d ? (d.descricao || '') : '',
-        tipoDemanda: d ? (d.tipo || '') : '',
-        tipo: d ? (d.tipo || '') : '',
-        procedimento: d ? (d.procedimento || '') : '',
-        status: d ? (d.status || 'Pendente') : 'Pendente',
-        demandaId: d ? d.id : null,
-        criadoEm: c.criado_em || ''
-      };
-    });
-
     return {
-      people: people,
+      people: (cidadaos || []).map(function (c) {
+        const d = (demandaPorCidadao[c.id] || [])[0] || null;
+        return {
+          id: c.id,
+          nome: c.nome || '',
+          mae: c.nome_mae || '',
+          nascimento: c.data_nascimento || '',
+          cpf: c.cpf || '',
+          sus: c.cartao_sus || '',
+          telefone: c.telefone || '',
+          bairro: c.bairro || '',
+          endereco: c.endereco || '',
+          observacoes: c.observacoes || '',
+          demanda: d ? (d.descricao || '') : '',
+          tipoDemanda: d ? (d.tipo || '') : '',
+          tipo: d ? (d.tipo || '') : '',
+          procedimento: d ? (d.procedimento || '') : '',
+          status: d ? (d.status || 'Pendente') : 'Pendente',
+          demandaId: d ? d.id : null,
+          criadoEm: c.criado_em || ''
+        };
+      }),
       agenda: (agenda || []).map(function (a) {
         return {
           id: a.id,
@@ -311,8 +275,6 @@
       await upsert('cidadaos', cidadaos);
       await upsert('demandas', demandas);
       await upsert('agenda', agenda);
-
-      /* Mantém exclusões feitas pelo usuário sincronizadas. */
       await deleteMissing('demandas', demandas.map(function (d) { return d.id; }));
       await deleteMissing('cidadaos', cidadaos.map(function (c) { return c.id; }));
       await deleteMissing('agenda', agenda.map(function (a) { return a.id; }));
@@ -344,7 +306,6 @@
 
   function injectPanel() {
     if (document.getElementById('gabineteSupabasePanel')) return;
-
     const panel = document.createElement('div');
     panel.id = 'gabineteSupabasePanel';
     panel.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:18px;font-family:Arial,sans-serif;';
@@ -367,7 +328,6 @@
       </div>`;
 
     document.body.appendChild(panel);
-
     const cfg = getConfig();
     if (cfg) {
       document.getElementById('sbUrl').value = cfg.url || '';
@@ -385,7 +345,6 @@
         status.textContent = 'Preencha Project URL, chave pública, e-mail e senha.';
         return;
       }
-
       if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)) {
         status.textContent = 'O Project URL parece inválido. Use o endereço terminado em .supabase.co.';
         return;
@@ -426,15 +385,23 @@
 
     if (session.expires_at && Date.now() > Number(session.expires_at) * 1000 - 60000) {
       session = await refreshSession();
-      if (!session) {
-        injectPanel();
-        return false;
-      }
+      if (!session) { injectPanel(); return false; }
     }
 
     bootstrapping = true;
     try {
+      const localBefore = readLocal();
       const remote = await fetchRemote();
+      const remoteEmpty = remote.people.length === 0 && remote.agenda.length === 0;
+      const localHasData = localBefore.people.length > 0 || localBefore.agenda.length > 0;
+
+      if (remoteEmpty && localHasData) {
+        bootstrapping = false;
+        await persist(localBefore);
+        if (forceReload) location.reload();
+        return true;
+      }
+
       writeLocal(remote);
       bootstrapping = false;
       if (forceReload) location.reload();
@@ -447,13 +414,10 @@
     }
   }
 
-  /* Intercepta os salvamentos da aplicação atual sem alterar sua interface. */
   const originalSetItem = Storage.prototype.setItem;
   Storage.prototype.setItem = function (key, value) {
     originalSetItem.call(this, key, value);
-    if (this === localStorage && key === DB_KEY && rawGet.call(localStorage, SYNCING_KEY) !== '1') {
-      scheduleSync();
-    }
+    if (this === localStorage && key === DB_KEY && rawGet.call(localStorage, SYNCING_KEY) !== '1') scheduleSync();
   };
 
   window.GabineteDB = {
@@ -469,11 +433,6 @@
     sincronizar: function () { return persist(readLocal()); }
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      bootstrap(false);
-    }, { once: true });
-  } else {
-    bootstrap(false);
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { bootstrap(false); }, { once: true });
+  else bootstrap(false);
 })();
