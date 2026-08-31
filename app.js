@@ -1,7 +1,8 @@
 const KEY = 'gabineteDigitalDemo';
 
 let db = JSON.parse(
-  localStorage.getItem(KEY) || '{"people":[],"agenda":[]}'
+  localStorage.getItem(KEY) ||
+  '{"people":[],"agenda":[]}'
 );
 
 const $ = (selector) => document.querySelector(selector);
@@ -84,8 +85,9 @@ function birth(person) {
   let month;
   let year;
 
-  // DD/MM/AAAA
-  let match = value.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
+  let match = value.match(
+    /^(\d{2})[\/-](\d{2})[\/-](\d{4})$/
+  );
 
   if (match) {
     day = Number(match[1]);
@@ -93,9 +95,10 @@ function birth(person) {
     year = Number(match[3]);
   }
 
-  // AAAA-MM-DD
   if (!match) {
-    match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    match = value.match(
+      /^(\d{4})-(\d{2})-(\d{2})$/
+    );
 
     if (match) {
       year = Number(match[1]);
@@ -145,6 +148,11 @@ $('#form').onsubmit = (event) => {
       ? crypto.randomUUID()
       : Date.now().toString();
 
+  /* GARANTE OS CAMPOS DE DEMANDA */
+  person.demanda = person.demanda || '';
+  person.tipo = person.tipo || '';
+  person.status = person.status || 'Pendente';
+
   db.people.unshift(person);
 
   event.target.reset();
@@ -177,6 +185,9 @@ $('#agendaForm').onsubmit = (event) => {
       ? crypto.randomUUID()
       : Date.now().toString();
 
+  appointment.status =
+    appointment.status || 'Pendente';
+
   db.agenda.push(appointment);
 
   event.target.reset();
@@ -205,7 +216,9 @@ function render() {
       person.telefone,
       person.sus,
       person.demanda,
-      person.tipo
+      person.tipo,
+      person.status,
+      person.bairro
     ]
       .join(' ')
       .toLowerCase();
@@ -226,7 +239,6 @@ function render() {
   container.innerHTML =
     people.map((person) => `
       <div class="item">
-
         <div>
           <b>${esc(person.nome)}</b>
 
@@ -237,8 +249,13 @@ function render() {
           </div>
 
           <div>
-            ${esc(person.tipo || 'Demanda')}
-            ${person.demanda ? ' • ' + esc(person.demanda) : ''}
+            <b>Demanda:</b>
+            ${esc(person.demanda || 'Não informada')}
+          </div>
+
+          <div>
+            <b>Tipo:</b>
+            ${esc(person.tipo || 'Não informado')}
           </div>
 
           <div>
@@ -256,7 +273,6 @@ function render() {
         >
           WhatsApp
         </button>
-
       </div>
     `).join('') ||
     `
@@ -305,12 +321,13 @@ function renderDemandas() {
 
   const demands = db.people.filter((person) => {
 
-    const demanda =
-      (
-        (person.demanda || '') +
-        ' ' +
-        (person.tipo || '')
-      ).toLowerCase();
+    const demanda = (
+      (person.demanda || '') +
+      ' ' +
+      (person.tipo || '') +
+      ' ' +
+      (person.nome || '')
+    ).toLowerCase();
 
     const personBairro =
       (person.bairro || '').toLowerCase();
@@ -336,12 +353,17 @@ function renderDemandas() {
           </b>
 
           <div>
+            <b>Tipo:</b>
             ${esc(person.tipo || 'Tipo não informado')}
           </div>
 
           <div>
+            <b>Pessoa:</b>
             ${esc(person.nome)}
-            •
+          </div>
+
+          <div>
+            <b>Bairro:</b>
             ${esc(person.bairro || 'Bairro não informado')}
           </div>
 
@@ -409,7 +431,7 @@ function renderAgenda() {
         </div>
 
         <span class="badge">
-          ${esc(appointment.status)}
+          ${esc(appointment.status || 'Pendente')}
         </span>
 
       </div>
@@ -488,7 +510,8 @@ function renderBirthdaysPanel() {
 
   if (!container) return;
 
-  const birthdays = getBirthdays().slice(0, 5);
+  const birthdays =
+    getBirthdays().slice(0, 5);
 
   container.innerHTML =
     birthdays.map((item) => `
@@ -517,6 +540,17 @@ function renderBirthdaysPanel() {
       </div>
     `;
 }
+
+/* =========================
+   FILTROS
+========================= */
+
+$('#q')?.addEventListener('input', render);
+$('#bairro')?.addEventListener('input', render);
+
+$('#proc')?.addEventListener('input', renderDemandas);
+$('#procB')?.addEventListener('input', renderDemandas);
+$('#procS')?.addEventListener('change', renderDemandas);
 
 /* =========================
    INICIALIZAÇÃO
