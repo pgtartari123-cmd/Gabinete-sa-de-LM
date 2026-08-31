@@ -224,58 +224,7 @@
 
   <script src="app.js"></script>
 
-  <script>
-    function mostrarAba(id) {
-
-      document.querySelectorAll('.tab').forEach(function(tab) {
-        tab.style.display = 'none';
-      });
-
-      const aba = document.getElementById(id);
-
-      if (aba) {
-        aba.style.display = 'block';
-      }
-
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-
-    function imprimirPessoas() {
-      window.print();
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-
-      mostrarAba('painel');
-
-      if (typeof render === 'function') {
-        render();
-      }
-
-      if (typeof renderDemanda === 'function') {
-        renderDemanda();
-      }
-
-      if (typeof renderDemandas === 'function') {
-        renderDemandas();
-      }
-
-      if (typeof renderAgenda === 'function') {
-        renderAgenda();
-      }
-
-      if (typeof renderizarAniversários === 'function') {
-        renderizarAniversários();
-      }
-
-      if (typeof renderBirthdays === 'function') {
-        renderBirthdays();
-      }
-    });
-  </script>
+ <script src="app.js"></script>
 
 </body>
 </html>
