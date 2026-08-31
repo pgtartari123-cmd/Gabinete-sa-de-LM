@@ -1,1 +1,422 @@
-*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#f5f6fb;color:#172033}header{background:#fff;padding:14px 18px;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:5}header strong{display:block;font-size:20px}header small{color:#667085}nav{display:flex;gap:8px;overflow:auto;background:#fff;padding:10px;position:sticky;top:64px;z-index:4;border-bottom:1px solid #ddd}button{border:0;border-radius:10px;padding:11px 15px;background:#4f46e5;color:#fff;font-weight:700}nav button{background:#eef0f5;color:#172033;white-space:nowrap}main{max-width:1200px;margin:auto;padding:18px}.tab{display:none}.tab:first-child{display:block}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.cards>div,.panel,#people .item,#demands .item,#agendaList .item,#birthdays .item{background:#fff;border:1px solid #e5e7eb;border-radius:15px;padding:16px;margin:10px 0}.cards span{display:block;color:#667085}.cards b{font-size:28px}.head{display:flex;justify-content:space-between;align-items:center}.filters{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.filters>*{flex:1;min-width:180px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.grid label{display:flex;flex-direction:column;gap:6px;font-weight:600}.wide{grid-column:1/-1}input,select,textarea{padding:12px;border:1px solid #d5d9e2;border-radius:10px;font:inherit;background:#fff}textarea{min-height:90px}.item{display:flex;justify-content:space-between;gap:12px;align-items:center}.muted{color:#667085;font-size:14px}.badge{background:#eef0f5;border-radius:999px;padding:4px 9px;font-size:12px}@media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.item,.head{align-items:flex-start;flex-direction:column}}@media print{header,nav,.filters,button,.head{display:none!important}body{background:#fff}.tab{display:none!important}#pessoas{display:block!important}}
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --background: #f5f7fb;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --border: #e4e7ec;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* CABEÇALHO */
+
+.topo {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  padding: 22px 20px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.marca {
+  max-width: 1200px;
+  margin: 0 auto 18px;
+}
+
+.marca h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.marca p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* MENU */
+
+.menu {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.menu::-webkit-scrollbar {
+  display: none;
+}
+
+.menu button {
+  flex: 0 0 auto;
+  border: 0;
+  background: #eef0f7;
+  color: var(--text);
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu button:hover {
+  background: #e0e3f0;
+}
+
+.menu button:active {
+  transform: scale(0.97);
+}
+
+/* CONTEÚDO */
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.tab {
+  display: none;
+}
+
+.tab h2 {
+  margin: 0 0 20px;
+  font-size: 30px;
+}
+
+.tab:first-child {
+  display: block;
+}
+
+/* CARDS */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.05);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* BOTÕES */
+
+button {
+  font-family: inherit;
+}
+
+.acoes {
+  margin-bottom: 18px;
+}
+
+.acoes button,
+form button {
+  background: var(--primary);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acoes button:hover,
+form button:hover {
+  background: var(--primary-dark);
+}
+
+/* FILTROS */
+
+.filtros {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* FORMULÁRIOS */
+
+form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.05);
+}
+
+.campo {
+  margin-bottom: 16px;
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #d0d5dd;
+  border-radius: 11px;
+  background: #fff;
+  color: var(--text);
+  padding: 13px 14px;
+  font-size: 15px;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* LISTAS */
+
+#listaPessoas,
+#listaDemandas,
+#listaAgenda,
+#listaAniversarios {
+  display: grid;
+  gap: 14px;
+}
+
+/* ITEM DE PESSOA */
+
+.pessoa,
+.demanda,
+.agenda-item,
+.aniversario,
+.item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.04);
+}
+
+.pessoa h3,
+.demanda h3,
+.agenda-item h3,
+.aniversario h3,
+.item h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+}
+
+.pessoa p,
+.demanda p,
+.agenda-item p,
+.aniversario p,
+.item p {
+  margin: 4px 0;
+  color: #475467;
+}
+
+/* STATUS */
+
+.status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: #eef0f7;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status.pendente {
+  background: #fff7e6;
+  color: #b54708;
+}
+
+.status.andamento {
+  background: #eff8ff;
+  color: #175cd3;
+}
+
+.status.concluido {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+/* WHATSAPP */
+
+.whatsapp {
+  display: inline-block;
+  margin-top: 12px;
+  background: #16a34a;
+  color: #fff !important;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-weight: 700;
+}
+
+.whatsapp:hover {
+  background: #15803d;
+}
+
+/* BOTÕES DENTRO DOS CARDS */
+
+.pessoa button,
+.demanda button,
+.agenda-item button,
+.aniversario button,
+.item button {
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 13px;
+  margin-top: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* PAINEL */
+
+#painelConteudo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+#painelConteudo .card {
+  min-height: 130px;
+}
+
+/* IMPRESSÃO */
+
+@media print {
+  .topo,
+  .menu,
+  .acoes,
+  .filtros,
+  form {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .tab {
+    display: none !important;
+  }
+
+  #pessoas {
+    display: block !important;
+  }
+
+  .card,
+  .pessoa,
+  .demanda,
+  .agenda-item,
+  .aniversario {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+}
+
+/* CELULAR */
+
+@media (max-width: 700px) {
+
+  .topo {
+    padding: 17px 14px 12px;
+  }
+
+  .marca h1 {
+    font-size: 24px;
+  }
+
+  .marca p {
+    font-size: 13px;
+  }
+
+  .menu {
+    gap: 7px;
+  }
+
+  .menu button {
+    padding: 11px 14px;
+    font-size: 14px;
+  }
+
+  main {
+    padding: 22px 14px 50px;
+  }
+
+  .tab h2 {
+    font-size: 27px;
+  }
+
+  .filtros {
+    grid-template-columns: 1fr;
+  }
+
+  #painelConteudo {
+    grid-template-columns: 1fr;
+  }
+
+  form {
+    padding: 17px;
+  }
+
+  .card,
+  .pessoa,
+  .demanda,
+  .agenda-item,
+  .aniversario {
+    padding: 16px;
+  }
+}
