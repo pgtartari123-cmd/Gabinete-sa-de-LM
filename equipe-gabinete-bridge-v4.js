@@ -1,4 +1,5 @@
-/* Bridge v6 — botão de cadastro de membros sempre visível */
+/* Bridge — abre o cadastro de membros persistente no Supabase.
+   O módulo antigo v4 era localStorage; agora o botão usa o v5 (nuvem + Auth). */
 (function(){'use strict';
 function addButton(){
   const box=document.querySelector('#eqv3 .eqv3box');
@@ -9,7 +10,7 @@ function addButton(){
   b.textContent='👥 Cadastrar / Gerenciar membros';
   b.style.cssText='display:block;width:100%;margin:14px 0 4px;padding:15px;border-radius:12px;background:#0f766e;color:#fff;font-size:16px;font-weight:800;border:0;cursor:pointer;box-sizing:border-box;';
   b.onclick=function(){
-    if(typeof window.abrirEquipeMembrosV4==='function') window.abrirEquipeMembrosV4();
+    if(typeof window.abrirEquipeMembrosV5==='function') window.abrirEquipeMembrosV5();
     else alert('O módulo de membros ainda está carregando. Feche e abra Equipe novamente.');
   };
   const toolbar=box.querySelector('.eqv3toolbar');
