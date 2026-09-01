@@ -1,5 +1,6 @@
-/* Bridge — equipe: cadastro cloud com sessão robusta */
+/* Bridge — equipe: cadastro cloud com sessão robusta + integridade */
 (function(){'use strict';
+(function carregarIntegridade(){if(document.getElementById('integridadeNuvemV1'))return;const s=document.createElement('script');s.id='integridadeNuvemV1';s.src='integridade-nuvem-v1.js?v=1001';s.async=false;document.head.appendChild(s)})();
 function base(){try{const c=JSON.parse(localStorage.getItem('gabineteSupabaseConfig')||'{}');return c.url?String(c.url).replace(/\/+$/,''):''}catch(e){return''}}
 function key(){try{const c=JSON.parse(localStorage.getItem('gabineteSupabaseConfig')||'{}');return c.anonKey||''}catch(e){return''}}
 function token(){try{const t=localStorage.getItem('gabineteAccessToken')||'';if(t)return t;const s=JSON.parse(localStorage.getItem('gabineteSupabaseSession')||'{}');return s.access_token||''}catch(e){return''}}
