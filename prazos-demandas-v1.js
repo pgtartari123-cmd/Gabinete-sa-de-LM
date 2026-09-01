@@ -14,4 +14,27 @@ function renderCards(){const list=document.getElementById('listaDemandas');if(!l
 function resumo(){const list=document.getElementById('listaDemandas');if(!list||document.getElementById('gdPrazoResumo'))return;const db=read(),ds=[];(db.people||[]).forEach(p=>(p.demandas||[]).forEach(d=>ds.push(d)));const abertas=ds.filter(d=>d.status!=='Concluído'),atrasadas=abertas.filter(d=>{const x=diffDays(d.prazo);return x!==null&&x<0}),hojeN=abertas.filter(d=>diffDays(d.prazo)===0),breve=abertas.filter(d=>{const x=diffDays(d.prazo);return x!==null&&x>=1&&x<=3});if(!ds.length)return;const box=document.createElement('div');box.id='gdPrazoResumo';box.className='gd-prazo-resumo';box.innerHTML=`<div><strong>${atrasadas.length}</strong><span>🔴 Atrasadas</span></div><div><strong>${hojeN.length}</strong><span>🟠 Vencem hoje</span></div><div><strong>${breve.length}</strong><span>🟡 Próximas 72h</span></div>`;list.parentNode.insertBefore(box,list)}
 function run(){style();resumo();renderCards()}
 document.addEventListener('DOMContentLoaded',()=>setTimeout(run,700));new MutationObserver(()=>setTimeout(run,50)).observe(document.body,{childList:true,subtree:true});
+
+/* FIX — ações das demandas múltiplas: não sobrescreve o fluxo principal */
+function proximoStatus(s){return s==='Pendente'?'Em andamento':s==='Em andamento'?'Concluído':'Pendente'}
+function sincronizar(){try{if(window.GabineteDB&&typeof window.GabineteDB.sincronizar==='function')setTimeout(()=>window.GabineteDB.sincronizar(),80)}catch(e){console.error(e)}}
+function avancarSubdemanda(pid,did,el){
+  const db=read();const p=(db.people||[]).find(x=>String(x.id)===String(pid));if(!p)return;
+  const ds=Array.isArray(p.demandas)?p.demandas:[];const d=ds.find(x=>String(x.id)===String(did));if(!d)return;
+  d.status=proximoStatus(d.status||'Pendente');d.atualizadoEm=new Date().toISOString();
+  const ultimo=ds[ds.length-1];if(ultimo===d){p.status=d.status;p.demanda=d.demanda;p.tipoDemanda=d.tipoDemanda;p.tipo=d.tipoDemanda;p.procedimento=d.procedimento}
+  localStorage.setItem(DB,JSON.stringify(db));
+  const small=el?.parentElement?.querySelector('small');if(small){const tipo=d.tipoDemanda||'Outro';small.textContent=tipo+' • '+d.status}
+  if(el){el.disabled=true;setTimeout(()=>{el.disabled=false},450)}
+  sincronizar();
+}
+document.addEventListener('click',function(ev){
+  const btn=ev.target.closest?.('.subdemanda button');
+  if(!btn||btn.textContent.trim()!=='Avançar')return;
+  ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+  const sub=btn.closest('.subdemanda'),box=sub?.parentElement,card=btn.closest('.card');if(!sub||!box||!card)return;
+  const h=card.querySelector('h3');const nome=h?.textContent.trim();const p=(read().people||[]).find(x=>String(x.nome||'').trim()===String(nome||''));if(!p)return;
+  const index=[...box.querySelectorAll('.subdemanda')].indexOf(sub),d=p?.demandas?.[index];if(!d)return;
+  avancarSubdemanda(p.id,d.id,btn);
+},true);
 })();
