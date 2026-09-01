@@ -3,7 +3,7 @@
 function carregarV6(cb){
   if(typeof window.abrirEquipeMembrosV6==='function'){cb();return}
   const s=document.createElement('script');
-  s.src='equipe-gabinete-v6.js?v=7001';
+  s.src='equipe-gabinete-v6.js?v=8001';
   s.onload=cb;
   s.onerror=()=>alert('Não foi possível carregar o módulo de equipe em nuvem. Recarregue a página.');
   document.body.appendChild(s);
