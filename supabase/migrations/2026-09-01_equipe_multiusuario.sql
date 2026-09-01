@@ -39,8 +39,6 @@ drop policy if exists equipe_insert_admin on public.equipe_membros;
 drop policy if exists equipe_update_admin on public.equipe_membros;
 drop policy if exists equipe_delete_admin on public.equipe_membros;
 
-authorize -- placeholder
-
 create policy equipe_select_admin on public.equipe_membros
 for select to authenticated using (public.usuario_eh_administrador());
 
@@ -55,7 +53,6 @@ with check (public.usuario_eh_administrador());
 create policy equipe_delete_admin on public.equipe_membros
 for delete to authenticated using (public.usuario_eh_administrador());
 
--- Sincroniza atualizado_em em alterações.
 create or replace function public.atualizar_equipe_membro_timestamp()
 returns trigger language plpgsql as $$
 begin
