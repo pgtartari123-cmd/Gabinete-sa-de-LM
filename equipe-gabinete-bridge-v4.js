@@ -1,38 +1,18 @@
-/* Bridge — módulo de equipe em nuvem, com fallback direto */
+/* Bridge — equipe: abertura robusta do cadastro cloud */
 (function(){'use strict';
-function carregarV6(cb){
-  if(typeof window.abrirEquipeMembrosV6==='function'){cb();return}
-  const s=document.createElement('script');
-  s.src='equipe-gabinete-v6.js?v=9001';
-  s.onload=cb;
-  s.onerror=()=>alert('Não foi possível carregar o cadastro da equipe. Recarregue a página.');
-  document.body.appendChild(s);
+function base(){try{const c=JSON.parse(localStorage.getItem('gabineteSupabaseConfig')||'{}');return c.url?String(c.url).replace(/\/+$/,''):''}catch(e){return''}}
+function key(){try{const c=JSON.parse(localStorage.getItem('gabineteSupabaseConfig')||'{}');return c.anonKey||''}catch(e){return''}}
+async function criar(body){const r=await fetch(base()+'/functions/v1/criar-membro',{method:'POST',headers:{apikey:key(),Authorization:'Bearer '+(localStorage.getItem('gabineteAccessToken')||''),'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'Não foi possível cadastrar o membro.');return j}
+function formulario(){
+  document.getElementById('eqBridgeForm')?.remove();
+  const m=document.createElement('div');m.id='eqBridgeForm';m.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#0f172acc;display:flex;align-items:center;justify-content:center;padding:14px;font-family:Arial';
+  m.innerHTML='<div style="background:#fff;width:min(520px,100%);max-height:94vh;overflow:auto;border-radius:22px;padding:22px;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:start"><div><small style="color:#64748b">ADMINISTRAÇÃO • EQUIPE</small><h2 style="margin:6px 0">👥 Cadastrar membro</h2><p style="color:#64748b">Acesso simples com <b>usuário + senha</b>.</p></div><button id="eqbfX" type="button" style="font-size:20px;border:0;background:#f1f5f9;border-radius:10px;padding:10px">✕</button></div><form id="eqbf"><label>Nome completo</label><input name="nome" required placeholder="Ex.: João da Silva" style="width:100%;padding:13px;margin:6px 0 12px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px"><label>Usuário</label><input name="usuario" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]+" placeholder="Ex.: joao" style="width:100%;padding:13px;margin:6px 0 12px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px"><label>Cargo</label><select name="cargo" style="width:100%;padding:13px;margin:6px 0 12px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px"><option>Vereador(a)</option><option>Assessor(a)</option><option>Atendimento</option></select><label>Senha inicial</label><input name="senha" required minlength="6" type="password" placeholder="Mínimo 6 caracteres" style="width:100%;padding:13px;margin:6px 0 14px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px"><div id="eqbfMsg" style="min-height:20px;margin-bottom:10px"></div><button type="submit" style="width:100%;padding:14px;border:0;border-radius:11px;background:#4f46e5;color:#fff;font-weight:800;font-size:16px">➕ Cadastrar membro</button></form><p style="font-size:12px;color:#64748b">🔐 A senha não é armazenada no banco.</p></div>';
+  document.body.appendChild(m);m.querySelector('#eqbfX').onclick=()=>m.remove();m.querySelector('#eqbf').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),body={nome:String(f.get('nome')||'').trim(),usuario:String(f.get('usuario')||'').trim().toLowerCase(),cargo:String(f.get('cargo')||''),senha:String(f.get('senha')||'')},msg=m.querySelector('#eqbfMsg'),btn=e.target.querySelector('button[type=submit]');msg.textContent='';btn.disabled=true;btn.textContent='Cadastrando...';try{await criar(body);msg.style.color='#166534';msg.textContent='✅ Membro cadastrado com sucesso!';e.target.reset()}catch(x){msg.style.color='#b91c1c';msg.textContent='❌ '+x.message}finally{btn.disabled=false;btn.textContent='➕ Cadastrar membro'}};
 }
-function abrirNuvem(){
-  carregarV6(function(){
-    if(typeof window.abrirEquipeMembrosV6==='function') window.abrirEquipeMembrosV6();
-    else alert('O cadastro da equipe ainda está carregando. Toque novamente em alguns segundos.');
-  });
+function carregar(){
+  if(typeof window.abrirEquipeMembrosV6==='function'){window.abrirEquipeMembrosV6();return}
+  const s=document.createElement('script');s.src='equipe-gabinete-v6.js?v=11001';s.onload=()=>{setTimeout(()=>{if(typeof window.abrirEquipeMembrosV6==='function')window.abrirEquipeMembrosV6();else formulario()},50)};s.onerror=formulario;document.body.appendChild(s);
 }
-function addButton(){
-  const box=document.querySelector('#eqv3 .eqv3box');
-  if(!box)return;
-  let b=document.getElementById('abrirMembrosV6');
-  if(!b){
-    b=document.createElement('button');
-    b.id='abrirMembrosV6'; b.type='button';
-    b.textContent='☁️ Cadastrar / Gerenciar equipe';
-    b.setAttribute('aria-label','Cadastrar ou gerenciar equipe');
-    b.style.cssText='display:block;width:100%;margin:14px 0 4px;padding:15px;border-radius:12px;background:#0f766e;color:#fff;font-size:16px;font-weight:800;border:0;cursor:pointer;box-sizing:border-box;';
-    b.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();abrirNuvem();});
-    const toolbar=box.querySelector('.eqv3toolbar');
-    if(toolbar) toolbar.insertAdjacentElement('afterend',b); else box.appendChild(b);
-  }
-  box.querySelectorAll('button').forEach(x=>{
-    const t=(x.textContent||'').toLowerCase();
-    if(x.id!=='abrirMembrosV6' && /cadastrar|membros|gerenciar/.test(t)) x.style.display='none';
-  });
-}
-new MutationObserver(addButton).observe(document.documentElement,{childList:true,subtree:true});
-addButton();
+function addButton(){const box=document.querySelector('#eqv3 .eqv3box');if(!box)return;let b=document.getElementById('abrirMembrosV6');if(!b){b=document.createElement('button');b.id='abrirMembrosV6';b.type='button';b.textContent='☁️ Cadastrar / Gerenciar equipe';b.style.cssText='display:block;width:100%;margin:14px 0 4px;padding:15px;border-radius:12px;background:#0f766e;color:#fff;font-size:16px;font-weight:800;border:0;cursor:pointer;box-sizing:border-box';b.onclick=e=>{e.preventDefault();e.stopPropagation();carregar()};const toolbar=box.querySelector('.eqv3toolbar');if(toolbar)toolbar.insertAdjacentElement('afterend',b);else box.appendChild(b)}box.querySelectorAll('button').forEach(x=>{const t=(x.textContent||'').toLowerCase();if(x.id!=='abrirMembrosV6'&&/cadastrar|membros|gerenciar/.test(t))x.style.display='none'})}
+new MutationObserver(addButton).observe(document.documentElement,{childList:true,subtree:true});addButton();
 })();
