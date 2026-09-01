@@ -26,6 +26,13 @@ function cleanupLegacyButtons(){
   });
 }
 
+function cleanupDuplicateMemberButton(){
+  document.querySelectorAll('button').forEach(b=>{
+    const t=(b.textContent||'').replace(/\s+/g,' ').trim();
+    if(t.includes('Cadastrar / Gerenciar membros')) b.remove();
+  });
+}
+
 /* UX final: gerenciamento e cadastro em telas separadas */
 function openCreateSeparated(){
   style(); document.getElementById('eqsepnew')?.remove();
@@ -40,6 +47,7 @@ function openSeparated(){
   document.body.appendChild(m);m.querySelector('#eqbx').onclick=()=>m.remove();m.querySelector('#eqopennew').onclick=openCreateSeparated;list();
 }
 document.addEventListener('click',e=>{const b=e.target.closest('#abrirMembrosDireto');if(b){e.preventDefault();e.stopImmediatePropagation();openSeparated()}},true);
-new MutationObserver(cleanupLegacyButtons).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(()=>{cleanupLegacyButtons();cleanupDuplicateMemberButton()}).observe(document.documentElement,{childList:true,subtree:true});
 cleanupLegacyButtons();
+cleanupDuplicateMemberButton();
 })();
