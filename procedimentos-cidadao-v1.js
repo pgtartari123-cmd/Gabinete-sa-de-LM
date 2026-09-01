@@ -1,0 +1,33 @@
+/* GABINETE DIGITAL — Todos os procedimentos do cidadão */
+(function(){'use strict';
+  const DB='gabineteDigitalDemo';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const read=()=>{try{const d=JSON.parse(localStorage.getItem(DB)||'{"people":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}};
+  const save=d=>{localStorage.setItem(DB,JSON.stringify(d));if(window.render)window.render();if(window.renderDemandas)window.renderDemandas();if(window.atualizarPainel)window.atualizarPainel()};
+  const statusNext=s=>s==='Pendente'?'Em andamento':s==='Em andamento'?'Concluído':'Pendente';
+  function modal(pid){
+    const db=read(),p=db.people.find(x=>x.id===pid);if(!p)return;
+    const ds=Array.isArray(p.demandas)?p.demandas:[];
+    if(!ds.length){alert('Este cidadão ainda não possui procedimentos/demandas cadastrados.');return}
+    document.getElementById('gdProcedimentosModal')?.remove();
+    const m=document.createElement('div');m.id='gdProcedimentosModal';m.innerHTML=`<div class="gdp-modal"><div class="gdp-head"><div><span class="eyebrow">HISTÓRICO DO CIDADÃO</span><h2>📋 Todos os procedimentos</h2><p>${esc(p.nome||'Cidadão')} • ${ds.length} ${ds.length===1?'registro':'registros'}</p></div><button class="gdp-close" type="button">✕</button></div><div class="gdp-list">${ds.map((d,i)=>`<article class="gdp-item" data-index="${i}"><div class="gdp-top"><div><h3>${esc(d.demanda||'Demanda')}</h3><div class="gdp-meta">${esc(d.tipoDemanda||d.tipo||'Outro')}${d.procedimento?` • Procedimento: ${esc(d.procedimento)}`:''}</div>${d.protocolo?`<div class="gdp-prot">📄 ${esc(d.protocolo)}</div>`:''}</div><span class="gdp-status">${esc(d.status||'Pendente')}</span></div><div class="gdp-bottom"><div><strong>Status:</strong> <span class="gdp-status-text">${esc(d.status||'Pendente')}</span></div><button class="gdp-advance" type="button">Avançar status</button>${window.gerenciarDemanda?'<button class="gdp-manage" type="button">⚙️ Gerenciar</button>':''}</div></article>`).join('')}</div></div>`;
+    document.body.appendChild(m);
+    const refreshItem=(item,d)=>{const s=d.status||'Pendente';item.querySelector('.gdp-status').textContent=s;item.querySelector('.gdp-status-text').textContent=s};
+    m.querySelector('.gdp-close').onclick=()=>m.remove();m.onclick=e=>{if(e.target===m)m.remove()};
+    m.querySelectorAll('.gdp-item').forEach((item,i)=>{
+      item.querySelector('.gdp-advance').onclick=()=>{const d=db.people.find(x=>x.id===pid)?.demandas?.[i];if(!d)return;d.status=statusNext(d.status||'Pendente');d.atualizadoEm=new Date().toISOString();if(p.demandas[p.demandas.length-1]===d){p.status=d.status;p.demanda=d.demanda;p.tipoDemanda=d.tipoDemanda||d.tipo;p.tipo=p.tipoDemanda;p.procedimento=d.procedimento||''}localStorage.setItem(DB,JSON.stringify(db));refreshItem(item,d);if(window.render)window.render();if(window.renderDemandas)window.renderDemandas();if(window.atualizarPainel)window.atualizarPainel()};
+      const b=item.querySelector('.gdp-manage');if(b)b.onclick=()=>{m.remove();window.gerenciarDemanda(pid,ds[i].id)};
+    });
+  }
+  function addButtons(){
+    document.querySelectorAll('#listaPessoas .card').forEach(card=>{
+      if(card.dataset.gdp==='1')return;
+      const h=card.querySelector('h3');if(!h)return;const nome=h.textContent.trim();const db=read(),p=db.people.find(x=>String(x.nome||'').trim()===nome);if(!p||!Array.isArray(p.demandas)||!p.demandas.length)return;
+      card.dataset.gdp='1';const box=document.createElement('div');box.className='acoes';const b=document.createElement('button');b.type='button';b.textContent='📋 Todos os procedimentos';b.onclick=()=>modal(p.id);box.appendChild(b);card.appendChild(box);
+    });
+  }
+  function style(){if(document.getElementById('gdpStyle'))return;const s=document.createElement('style');s.id='gdpStyle';s.textContent=`#gdProcedimentosModal{position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:1000000;display:flex;align-items:center;justify-content:center;padding:14px}.gdp-modal{background:#fff;width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:22px;padding:20px;box-shadow:0 25px 80px #0005}.gdp-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.gdp-head h2{margin:4px 0}.gdp-head p{margin:4px 0;color:#64748b}.gdp-close{border:0;background:#eef2ff;border-radius:10px;padding:9px 12px;font-size:18px}.gdp-list{display:grid;gap:12px}.gdp-item{border:1px solid #e5e7eb;border-radius:16px;padding:14px}.gdp-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.gdp-top h3{margin:0 0 5px}.gdp-meta{color:#64748b}.gdp-prot{margin-top:6px;color:#3730a3;font-weight:800;font-size:13px}.gdp-status{display:inline-block;padding:7px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:800;white-space:nowrap}.gdp-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #eef0f4}.gdp-bottom>div{margin-right:auto;color:#475569}.gdp-bottom button{border:0;border-radius:10px;padding:10px 12px;font-weight:800;background:#4f46e5;color:#fff}.gdp-bottom .gdp-manage{background:#eef2ff;color:#3730a3}@media(max-width:600px){.gdp-top{display:block}.gdp-status{margin-top:8px}.gdp-bottom>div{width:100%;margin-right:0}}`;document.head.appendChild(s)}
+  document.addEventListener('DOMContentLoaded',()=>{style();setTimeout(addButtons,700)});
+  const oldRender=window.render;window.render=function(){if(oldRender)oldRender();setTimeout(addButtons,80)};
+  new MutationObserver(()=>setTimeout(addButtons,80)).observe(document.body,{childList:true,subtree:true});
+})();
