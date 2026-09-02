@@ -28,18 +28,17 @@
   }
   function sincronizarExclusao(){
     if(typeof window.excluirCadastro!=='function'||window.excluirCadastro.__lmDeleteSync)return;
-    const original=window.excluirCadastro;
     const fn=async id=>{
       const raw=localStorage.getItem(KEY);let d;try{d=JSON.parse(raw||'{"people":[],"agenda":[]}')}catch(e){d={people:[],agenda:[]}}
       const p=(d.people||[]).find(x=>x.id===id);if(!p)return alert('Cadastro não encontrado.');
       if(!confirm(`Deseja realmente excluir o cadastro de ${p.nome||'esta pessoa'}?\n\nO cadastro e suas demandas serão removidos da nuvem. Essa ação não pode ser desfeita.`))return;
       try{
-        if(window.GabineteDB?.sincronizar){};
         await excluirNuvem(id);
         d.people=(d.people||[]).filter(x=>x.id!==id);
         localStorage.setItem(KEY,JSON.stringify(d));
         window.render?.();window.renderDemandas?.();window.renderAgenda?.();window.renderBirthdays?.();window.atualizarPainel?.();
         alert('Cadastro excluído e sincronizado com sucesso!');
+        setTimeout(()=>location.reload(),150);
       }catch(e){console.error(e);alert('Não foi possível excluir na nuvem. O cadastro foi mantido.\n\n'+(e.message||e));}
     };
     fn.__lmDeleteSync=true;window.excluirCadastro=fn;
