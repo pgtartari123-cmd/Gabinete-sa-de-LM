@@ -24,6 +24,6 @@ function addFilters(){const pf=document.querySelector('#pessoas .filtros');if(pf
 function renderHooks(){addFilters();setTimeout(()=>{annotatePeople();annotateDemandas();augmentManagement()},0)}
 function patchRenders(){const r=window.render,d=window.renderDemandas;if(r&&!r._destino){const f=function(){r.apply(this,arguments);setTimeout(annotatePeople,0)};f._destino=true;window.render=f}if(d&&!d._destino){const f=function(){d.apply(this,arguments);setTimeout(annotateDemandas,0)};f._destino=true;window.renderDemandas=f}}
 function style(){if(document.getElementById('destinoDemandaStyle'))return;const s=document.createElement('style');s.id='destinoDemandaStyle';s.textContent='.apelido-ui,.destino-envio-ui{margin:6px 0;color:#be2f78;font-weight:600}.filtros select,.filtros input{min-width:190px}';document.head.appendChild(s)}
-function boot(){style();cleanupKnownTest();injectForm();patchInitial();patchEdit();patchRenders();renderHooks();ensureLocal();setTimeout(pull,900);setTimeout(sync,1400);setInterval(()=>{patchRenders();renderHooks()},2500);setInterval(sync,7000)}
+function boot(){style();cleanupKnownTest();injectForm();patchInitial();patchEdit();patchRenders();renderHooks();ensureLocal();setTimeout(pull,900);setTimeout(sync,1400);setTimeout(()=>{const sc=document.createElement('script');sc.src='data-nascimento-v1.js?v=1001';document.head.appendChild(sc)},100);setInterval(()=>{patchRenders();renderHooks()},2500);setInterval(sync,7000)}
 document.addEventListener('DOMContentLoaded',boot,{once:true});
 })();
