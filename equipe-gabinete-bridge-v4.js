@@ -12,31 +12,31 @@ function style(){if(document.getElementById('eqBridgeStyle'))return;const s=docu
 function msg(t,ok=false){const e=document.getElementById('eqBridgeMsg');if(e){e.className='eqmsg '+(ok?'ok':'err');e.textContent=t}}
 async function list(){const box=document.getElementById('eqBridgeList');if(!box)return;box.textContent='Carregando membros...';try{const rows=await rest('equipe_membros?select=id,nome,usuario,cargo,ativo,user_id,criado_em&order=criado_em.desc');box.innerHTML=rows.length?rows.map(u=>`<div class="eqbi"><div><b>${esc(u.nome)}</b><br><small>👤 ${esc(u.usuario||'sem usuário')} • ${esc(u.cargo||'')} • ${u.ativo?'🟢 Ativo':'🔴 Bloqueado'}</small></div><div class="eqba"><button data-t="${u.id}">${u.ativo?'Bloquear':'Ativar'}</button><button data-p="${u.user_id||''}" data-n="${esc(u.nome)}">🔑 Nova senha</button><button data-d="${u.id}">🗑️</button></div></div>`).join(''):'<p>Nenhum membro cadastrado na nuvem.</p>';box.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{try{const r=await rest('equipe_membros?id=eq.'+encodeURIComponent(b.dataset.t)+'&select=ativo');await rest('equipe_membros?id=eq.'+encodeURIComponent(b.dataset.t),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({ativo:!r[0].ativo})});await list()}catch(e){msg('Erro: '+e.message)}});box.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{if(!b.dataset.p){msg('Membro sem conta de acesso.');return}const s=prompt('Nova senha para '+b.dataset.n+' (mínimo 6 caracteres):');if(!s)return;if(s.length<6){msg('A senha precisa ter pelo menos 6 caracteres.');return}try{await fn('alterar-senha-membro',{user_id:b.dataset.p,senha:s});msg('Senha alterada com sucesso.',true)}catch(e){msg('Erro: '+e.message)}});box.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(!confirm('Remover este membro e o acesso dele?'))return;try{await rest('equipe_membros?id=eq.'+encodeURIComponent(b.dataset.d),{method:'DELETE'});await list()}catch(e){msg('Erro: '+e.message)}})}catch(e){box.innerHTML='<p>Não foi possível carregar a equipe.</p>';msg('Erro: '+e.message)}}
 function openManager(){if(!admin()){alert('Apenas o administrador pode gerenciar a equipe.');return}style();document.getElementById('eqBridgeMgr')?.remove();const m=document.createElement('div');m.id='eqBridgeMgr';m.innerHTML='<div class="eqbm"><div class="eqbh"><div><small>ADMINISTRAÇÃO • EQUIPE</small><h2>👥 Membros com acesso</h2><p>Gerencie quem pode entrar no Gabinete LM.</p></div><button id="eqbx" type="button">✕</button></div><h3>👤 Membros cadastrados</h3><div id="eqBridgeMsg"></div><div id="eqBridgeList">Carregando membros...</div><hr><h3>➕ Cadastrar novo membro</h3><form id="eqBridgeCreate" class="eqbc"><input name="nome" required placeholder="Nome completo"><input name="usuario" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]+" placeholder="Usuário"><select name="cargo"><option>Vereador(a)</option><option>Assessor(a)</option><option>Atendimento</option></select><input name="senha" required minlength="6" type="password" placeholder="Senha inicial"><button type="submit">Cadastrar</button></form></div>';document.body.appendChild(m);m.querySelector('#eqbx').onclick=()=>m.remove();m.querySelector('#eqBridgeCreate').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),body={nome:String(f.get('nome')||'').trim(),usuario:String(f.get('usuario')||'').trim().toLowerCase(),cargo:String(f.get('cargo')||''),senha:String(f.get('senha')||'')};try{await fn('criar-membro',body);msg('Membro criado com sucesso!',true);e.target.reset();await list()}catch(x){msg('Erro: '+x.message)}};list()}
-function addButton(){return}
+function ensureTopButton(box){
+  if(!box || box.querySelector('[data-eqbridge-main]')) return;
+  const b=document.createElement('button');
+  b.type='button'; b.setAttribute('data-eqbridge-main','1');
+  b.textContent='☁️ Cadastrar / Gerenciar equipe';
+  b.style.cssText='display:block;width:100%;margin:14px 0;padding:15px;border:0;border-radius:13px;background:#0f766e;color:#fff;font-weight:800;font-size:17px;cursor:pointer';
+  b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();openSeparated()};
+  const first=b.previousElementSibling;
+  box.insertBefore(b, first || box.firstChild);
+}
 function cleanupLegacyButtons(){
   const box=document.querySelector('#eqv3 .eqv3box');
   if(!box)return;
+  ensureTopButton(box);
   box.querySelectorAll('button').forEach(b=>{
     const t=(b.textContent||'').replace(/\s+/g,' ').trim();
-    if(t.includes('Cadastrar / Gerenciar equipe')){
-      b.type='button';
-      b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();openSeparated()};
-      return;
-    }
-    if(t.includes('Cadastrar / Gerenciar membros')){
-      b.remove();
-    }
+    if(t.includes('Cadastrar / Gerenciar membros') && !b.hasAttribute('data-eqbridge-main')) b.remove();
   });
 }
-
 function cleanupDuplicateMemberButton(){
   document.querySelectorAll('button').forEach(b=>{
     const t=(b.textContent||'').replace(/\s+/g,' ').trim();
     if(t.includes('Cadastrar / Gerenciar membros')) b.remove();
   });
 }
-
-/* UX final: gerenciamento e cadastro em telas separadas */
 function openCreateSeparated(){
   style(); document.getElementById('eqsepnew')?.remove();
   const m=document.createElement('div'); m.id='eqsepnew'; m.style.cssText='position:fixed;inset:0;z-index:2147483648;background:#0f172acc;display:flex;align-items:center;justify-content:center;padding:12px;font-family:Arial';
@@ -52,5 +52,4 @@ function openSeparated(){
 document.addEventListener('click',e=>{const b=e.target.closest('#abrirMembrosDireto');if(b){e.preventDefault();e.stopImmediatePropagation();openSeparated()}},true);
 new MutationObserver(()=>{cleanupLegacyButtons();cleanupDuplicateMemberButton()}).observe(document.documentElement,{childList:true,subtree:true});
 cleanupLegacyButtons();
-cleanupDuplicateMemberButton();
 })();
