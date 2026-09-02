@@ -1,0 +1,9 @@
+/* Gabinete LM — data de nascimento digitável v1 */
+(function(){'use strict';
+function pad(v){return String(v).padStart(2,'0')}
+function isoToBr(v){const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'/'+m[2]+'/'+m[1]:v||''}
+function brToIso(v){const m=String(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?m[3]+'-'+m[2]+'-'+m[1]:v||''}
+function mask(el){if(el.dataset.dataDigitavel==='1')return;el.dataset.dataDigitavel='1';el.type='text';el.inputMode='numeric';el.placeholder='DD/MM/AAAA';el.maxLength=10;el.autocomplete='bday';el.value=isoToBr(el.value);el.addEventListener('focus',()=>{el.value=isoToBr(el.value)});el.addEventListener('input',()=>{let d=el.value.replace(/\D/g,'').slice(0,8);let out='';if(d.length)out=d.slice(0,2);if(d.length>2)out+='/'+d.slice(2,4);if(d.length>4)out+='/'+d.slice(4,8);el.value=out});el.addEventListener('blur',()=>{if(!el.value)return;const m=el.value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m){el.setCustomValidity('Digite a data no formato DD/MM/AAAA.');return}const dt=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));const ok=dt.getFullYear()===Number(m[3])&&dt.getMonth()===Number(m[2])-1&&dt.getDate()===Number(m[1]);el.setCustomValidity(ok?'':'Data de nascimento inválida.');});}
+function boot(){const f=document.getElementById('formCadastro');const el=f?.elements?.nascimento;if(!el)return;mask(el);if(f.dataset.dataSubmitPatch!=='1'){f.dataset.dataSubmitPatch='1';f.addEventListener('submit',()=>{if(el.value){const iso=brToIso(el.value);if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){el.value=iso;setTimeout(()=>{el.value=isoToBr(iso)},50)}}},true)}}
+document.addEventListener('DOMContentLoaded',boot,{once:true});
+})();
