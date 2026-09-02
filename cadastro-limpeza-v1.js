@@ -1,5 +1,7 @@
-/* Gabinete LM — saneamento visual do formulário + data digitável v1 */
+/* Gabinete LM — saneamento visual do formulário + data digitável + limpeza de testes v2 */
 (function(){'use strict';
+  const KEY='gabineteDigitalDemo';
+  const TEST_NAMES=['joão teste','joao teste','maisa dalva teste'];
   function removeDuplicados(form){
     if(!form)return;
     const names=['telefone','bairro','endereco','mae','apelido','nascimento','cpf','sus','pontoReferencia','demanda','tipoDemanda','destinoEnvio','procedimento','status','observacoes'];
@@ -29,7 +31,18 @@
       this.setCustomValidity(dt.getFullYear()===year&&dt.getMonth()===month-1&&dt.getDate()===day?'':'Data inválida');
     });
   }
-  function run(){const f=document.getElementById('formCadastro');if(!f)return;removeDuplicados(f);dataDigitavel(f);}
+  function limparTestesLocais(){
+    try{
+      const raw=localStorage.getItem(KEY);if(!raw)return;
+      const d=JSON.parse(raw);if(!d||!Array.isArray(d.people))return;
+      const antes=d.people.length;
+      const idsRemovidos=d.people.filter(p=>TEST_NAMES.includes(String(p?.nome||'').trim().toLowerCase())).map(p=>p.id).filter(Boolean);
+      d.people=d.people.filter(p=>!TEST_NAMES.includes(String(p?.nome||'').trim().toLowerCase()));
+      if(Array.isArray(d.demandas))d.demandas=d.demandas.filter(x=>!idsRemovidos.includes(x?.cidadao_id)&&!TEST_NAMES.includes(String(x?.nome||'').trim().toLowerCase()));
+      if(antes!==d.people.length)localStorage.setItem(KEY,JSON.stringify(d));
+    }catch(e){}
+  }
+  function run(){limparTestesLocais();const f=document.getElementById('formCadastro');if(!f)return;removeDuplicados(f);dataDigitavel(f);}
   document.addEventListener('DOMContentLoaded',run,{once:true});
   const obs=new MutationObserver(run);obs.observe(document.documentElement,{childList:true,subtree:true});
   setInterval(run,1000);
