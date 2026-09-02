@@ -49,4 +49,31 @@ Storage.prototype.setItem=function(k,v){
   return originalSet.call(this,k,v);
 };
 try{shadow=rawGet.call(localStorage,KEY)||''}catch(e){}
+
+/* Proteção de produção: se o banco remoto estiver explicitamente vazio,
+   não deixa um cache antigo do navegador ressuscitar dados apagados. */
+(async function(){
+  try{
+    const cfg=JSON.parse(rawGet.call(localStorage,'gabineteSupabaseConfig')||'null');
+    const ses=JSON.parse(rawGet.call(localStorage,'gabineteSupabaseSession')||'null');
+    const token=rawGet.call(localStorage,'gabineteAccessToken')||ses?.access_token||'';
+    if(!cfg?.url||!cfg?.anonKey||!token)return;
+    const base=String(cfg.url).replace(/\/+$/,'');
+    const headers={apikey:cfg.anonKey,Authorization:'Bearer '+token};
+    const qs='select=id&limit=1';
+    const [c,d,a]=await Promise.all([
+      fetch(base+'/rest/v1/cidadaos?'+qs,{headers}),
+      fetch(base+'/rest/v1/demandas?'+qs,{headers}),
+      fetch(base+'/rest/v1/agenda?'+qs,{headers})
+    ]);
+    if(!c.ok||!d.ok||!a.ok)return;
+    const [cr,dr,ar]=await Promise.all([c.json(),d.json(),a.json()]);
+    if(Array.isArray(cr)&&Array.isArray(dr)&&Array.isArray(ar)&&!cr.length&&!dr.length&&!ar.length){
+      const local=JSON.parse(rawGet.call(localStorage,KEY)||'{"people":[],"agenda":[]}');
+      if((local.people||[]).length||(local.agenda||[]).length){
+        rawRemove();
+      }
+    }
+  }catch(e){console.warn('Cache local não validado:',e)}
+})();
 })();
