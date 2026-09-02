@@ -15,7 +15,6 @@ function stamp(value){
   const pp=new Map((prev?.people||[]).map(p=>[String(p.id),p]));
   next.people.forEach(p=>{
     const old=pp.get(String(p.id));
-    const oldJson=old?JSON.stringify(old):'';
     const copy={...p};
     delete copy.atualizadoEm;
     const oldCopy=old?{...old}:null;
@@ -33,6 +32,14 @@ function stamp(value){
         return d;
       });
     }
+  });
+  const aa=new Map((prev?.agenda||[]).map(a=>[String(a.id),a]));
+  next.agenda.forEach(a=>{
+    const old=aa.get(String(a.id));
+    const copy={...a}; delete copy.atualizadoEm;
+    const oldCopy=old?{...old}:null; if(oldCopy)delete oldCopy.atualizadoEm;
+    if(!old || JSON.stringify(copy)!==JSON.stringify(oldCopy))a.atualizadoEm=now();
+    else a.atualizadoEm=a.atualizadoEm||old.atualizadoEm||a.criadoEm||now();
   });
   shadow=JSON.stringify(next);
   return shadow;
