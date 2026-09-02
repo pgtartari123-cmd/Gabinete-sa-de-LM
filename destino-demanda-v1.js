@@ -1,6 +1,6 @@
 /* Gabinete LM — identificação, apelido e destino de encaminhamento v1 */
 (function(){'use strict';
-const KEY='gabineteDigitalDemo', DESTS=['Deputado Carlos Vinícius','SINECOM','Secretaria Municipal de Saúde (Éder)','Outro'];
+const KEY='gabineteDigitalDemo', DESTS=['Carlos Vinicius','Cilene Couto','Secretaria de Saúde (Concórdia)','Outro'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const read=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}};
 const cfg=()=>{try{return JSON.parse(localStorage.getItem('gabineteSupabaseConfig')||'null')}catch(e){return null}};
