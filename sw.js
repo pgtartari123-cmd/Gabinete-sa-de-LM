@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gabinete-lm-shell-v3';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=1007', './style.css?v=2001'];
+const CACHE_NAME = 'gabinete-lm-shell-v4';
+const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=1008', './style.css?v=2001'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
