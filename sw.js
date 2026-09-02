@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v4';
+const CACHE_NAME = 'gabinete-lm-shell-v5';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=1008', './style.css?v=2001'];
 
 self.addEventListener('install', event => {
