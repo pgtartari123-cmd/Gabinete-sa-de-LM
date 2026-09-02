@@ -18,10 +18,13 @@ function cleanupLegacyButtons(){
   if(!box)return;
   box.querySelectorAll('button').forEach(b=>{
     const t=(b.textContent||'').replace(/\s+/g,' ').trim();
-    if(t.includes('Cadastrar / Gerenciar equipe')){b.remove();return}
-    if(t.includes('Cadastrar / Gerenciar membros')){
+    if(t.includes('Cadastrar / Gerenciar equipe')){
       b.type='button';
       b.onclick=e=>{e.preventDefault();e.stopImmediatePropagation();openSeparated()};
+      return;
+    }
+    if(t.includes('Cadastrar / Gerenciar membros')){
+      b.remove();
     }
   });
 }
