@@ -37,25 +37,12 @@
     setTimeout(function(){e.remove()},6000);
   }
 
-  async function comprarGabineteLM(){
-    var token=localStorage.getItem('gabineteAccessToken');
-    if(!token){avisar('Faça login no Gabinete LM antes de comprar a licença.');return}
-    var b=document.getElementById('btnComprarGabineteLM');
-    if(b){b.disabled=true;b.textContent='⏳ Preparando pagamento...'}
+  function comprarGabineteLM(){
     try{
-      var r=await fetch('https://qizakldwyeqbummhtpsg.supabase.co/functions/v1/mercadopago-checkout',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':'sb_publishable_ZEM5lEJsiveCFkU9sClkCA_sn3v2M4X'},
-        body:JSON.stringify({origin:window.location.origin+window.location.pathname})
-      });
-      var data=await r.json().catch(function(){return{}});
-      if(!r.ok||!data.init_point&&!data.sandbox_init_point)throw new Error(data.error||'Não foi possível criar o checkout.');
-      var url=data.sandbox_init_point||data.init_point;
-      window.location.href=url;
+      window.location.href='./pagamento.html?v=2002';
     }catch(e){
       console.error(e);
-      avisar('⚠️ '+(e.message||'Erro ao preparar o pagamento.'));
-      if(b){b.disabled=false;b.textContent='💳 Comprar licença — R$ 4.300,00'}
+      avisar('⚠️ Não foi possível abrir a página de pagamento.');
     }
   }
   window.comprarGabineteLM=comprarGabineteLM;
@@ -68,7 +55,7 @@
     box.id='gabineteOfertaCompra';
     box.className='card destaque';
     box.style.cssText='margin-top:18px;border:1px solid rgba(0,0,0,.08);padding:20px';
-    box.innerHTML='<h3>🚀 Gabinete LM — Licença completa</h3><p>Tenha acesso ao sistema completo de gestão do gabinete, cidadãos, demandas, agenda e relatórios.</p><p><strong style="font-size:24px">R$ 4.300,00</strong> <span style="opacity:.7">pagamento único</span></p><button id="btnComprarGabineteLM" type="button" onclick="comprarGabineteLM()">💳 Comprar licença — R$ 4.300,00</button><p style="font-size:12px;opacity:.65;margin-top:10px">Pagamento protegido pelo Mercado Pago • Ambiente de testes enquanto estamos configurando.</p>';
+    box.innerHTML='<h3>🚀 Gabinete LM — Licença completa</h3><p>Tenha acesso ao sistema completo de gestão do gabinete, cidadãos, demandas, agenda e relatórios.</p><p><strong style="font-size:24px">R$ 4.300,00</strong> <span style="opacity:.7">pagamento único</span></p><button id="btnComprarGabineteLM" type="button" onclick="comprarGabineteLM()">💳 Comprar licença — R$ 4.300,00</button><p style="font-size:12px;opacity:.65;margin-top:10px">Pagamento protegido pelo Mercado Pago • Pix ou cartão de crédito</p>';
     painel.appendChild(box);
   }
 
