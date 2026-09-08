@@ -1,6 +1,5 @@
-/* GABINETE LM — correção da exibição de aniversários v1
+/* GABINETE LM — mensagem padrão de felicitações
    A data exibida é sempre a data de nascimento original cadastrada.
-   O ano não é substituído pelo próximo ano.
 */
 (function(){
 'use strict';
@@ -24,11 +23,20 @@ function proximaData(p){
   if(dt<today)dt.setFullYear(dt.getFullYear()+1);
   return dt;
 }
+function mensagem(nome){
+  return `Olá, ${nome}! 🎉\n\nEu, Vereadora Lene Martins, quero parabenizar você pelo seu aniversário! Desejo muita saúde, paz, felicidade e muitas bênçãos em sua vida. Que Deus continue iluminando seus caminhos e conceda muitos anos de vida!\n\nUm grande abraço,\nVereadora Lene Martins 💗`;
+}
 window.renderBirthdays=function(){
   const c=document.getElementById('listaAniversarios');
   if(!c)return;
   const b=(typeof db!=='undefined'?db.people:[]).map(p=>({person:p,date:proximaData(p)})).filter(x=>x.date).sort((a,b)=>a.date-b.date);
-  c.innerHTML=b.map(x=>`<div class="card"><h3>🎂 ${typeof esc==='function'?esc(x.person.nome):String(x.person.nome||'')}</h3><p>Aniversário: ${fmtNascimento(x.person.nascimento)}</p>${x.person.telefone?`<button type="button" onclick="wa('${typeof esc==='function'?esc(x.person.telefone):x.person.telefone}','Parabéns, ${typeof esc==='function'?esc(x.person.nome):String(x.person.nome||'')}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!')">Enviar felicitações pelo WhatsApp</button>`:''}</div>`).join('')||'<div class="card vazio"><h3>Nenhum aniversário cadastrado</h3><p>Cadastre a data de nascimento dos cidadãos para aparecerem aqui.</p></div>';
+  c.innerHTML=b.map(x=>{
+    const nome=String(x.person.nome||'').trim();
+    const tel=String(x.person.telefone||'').replace(/\D/g,'');
+    const msg=mensagem(nome);
+    const url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'';
+    return `<div class="card"><h3>🎂 ${typeof esc==='function'?esc(nome):nome}</h3><p>Aniversário: ${fmtNascimento(x.person.nascimento)}</p>${tel?`<button type="button" onclick="window.open('${url}','_blank')">Enviar felicitações pelo WhatsApp</button>`:''}</div>`;
+  }).join('')||'<div class="card vazio"><h3>Nenhum aniversário cadastrado</h3><p>Cadastre a data de nascimento dos cidadãos para aparecerem aqui.</p></div>';
 };
 if(document.readyState!=='loading')window.renderBirthdays();else document.addEventListener('DOMContentLoaded',()=>window.renderBirthdays());
 })();
