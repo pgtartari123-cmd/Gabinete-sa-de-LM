@@ -1,7 +1,7 @@
 {
-  "name": "Gabinete LM",
-  "short_name": "Gabinete LM",
-  "description": "Sistema oficial de gestão do Gabinete LM.",
+  "name": "Gabinete Lane Martins",
+  "short_name": "Gabinete Lane Martins",
+  "description": "Sistema oficial de gestão do Gabinete Lane Martins.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
