@@ -40,3 +40,30 @@ window.renderBirthdays=function(){
 };
 if(document.readyState!=='loading')window.renderBirthdays();else document.addEventListener('DOMContentLoaded',()=>window.renderBirthdays());
 })();
+
+/* GABINETE LM — sincronização manual segura
+   Não apaga dados locais. Envia os cadastros deste aparelho e depois atualiza a tela.
+*/
+(function(){
+'use strict';
+function instalar(){
+  if(document.getElementById('btnSyncGabinete'))return;
+  const b=document.createElement('button');
+  b.id='btnSyncGabinete';
+  b.type='button';
+  b.textContent='🔄 Sincronizar agora';
+  b.style.cssText='position:fixed;right:14px;bottom:18px;z-index:2147483646;border:0;border-radius:999px;padding:12px 16px;background:#e91e63;color:#fff;font:700 14px Arial;box-shadow:0 5px 18px #0003;cursor:pointer';
+  b.onclick=async()=>{
+    if(b.dataset.busy==='1')return;
+    b.dataset.busy='1';b.disabled=true;b.textContent='⏳ Sincronizando...';
+    try{
+      if(window.GabineteDB?.sincronizarResgate)await window.GabineteDB.sincronizarResgate();
+      if(window.GabineteDB?.sincronizar)await window.GabineteDB.sincronizar();
+      if(window.GabineteDB?.atualizarAgora)await window.GabineteDB.atualizarAgora();
+    }catch(e){console.error('[Gabinete LM] Sincronização manual:',e);alert('Não foi possível concluir a sincronização. Os dados locais foram preservados.');}
+    finally{b.dataset.busy='0';b.disabled=false;b.textContent='🔄 Sincronizar agora';}
+  };
+  document.body.appendChild(b);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',instalar,{once:true});else instalar();
+})();
