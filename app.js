@@ -18,3 +18,19 @@ function renderDemandas(){const c=$('#listaDemandas');if(!c)return;const d=db.pe
 const formAgenda=$('#formAgenda');if(formAgenda)formAgenda.addEventListener('submit',e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));d.id=typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString();db.agenda.push(d);e.target.reset();save();alert('Compromisso adicionado à agenda!')});window.excluirAgenda=id=>{if(confirm('Excluir este compromisso da agenda?')){db.agenda=db.agenda.filter(x=>x.id!==id);save()}};function renderAgenda(){const c=$('#listaAgenda');if(!c)return;const a=[...db.agenda].sort((x,y)=>(String(x.data||'')+String(x.hora||'')).localeCompare(String(y.data||'')+String(y.hora||'')));c.innerHTML=a.map(i=>`<div class="card"><h3>${esc(i.assunto||'Compromisso')}</h3><p>📅 ${i.data?new Date(i.data+'T00:00:00').toLocaleDateString('pt-BR'):'Sem data'}${i.hora?' • ⏰ '+esc(i.hora):''}</p>${i.tipo?`<p><strong>Tipo:</strong> ${esc(i.tipo)}</p>`:''}<p><strong>Status:</strong> ${esc(i.status||'Pendente')}</p><div class="acoes"><button type="button" onclick="excluirAgenda('${esc(i.id)}')">Excluir</button></div></div>`).join('')||'<div class="card vazio"><h3>Agenda vazia</h3><p>Adicione reuniões, atendimentos, eventos e visitas acima.</p></div>'}
 function getBirthdays(){return db.people.map(p=>({person:p,date:birth(p)})).filter(x=>x.date).sort((a,b)=>a.date-b.date)}function renderBirthdays(){const c=$('#listaAniversarios');if(!c)return;const b=getBirthdays();c.innerHTML=b.map(x=>`<div class="card"><h3>🎂 ${esc(x.person.nome)}</h3><p>Aniversário: ${x.date.toLocaleDateString('pt-BR')}</p>${x.person.telefone?`<button type="button" onclick="wa('${esc(x.person.telefone)}','Parabéns, ${esc(x.person.nome)}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!')">Enviar felicitações pelo WhatsApp</button>`:''}</div>`).join('')||'<div class="card vazio"><h3>Nenhum aniversário cadastrado</h3><p>Cadastre a data de nascimento dos cidadãos para aparecerem aqui.</p></div>'}
 $('#buscaPessoa')?.addEventListener('input',render);$('#filtroBairro')?.addEventListener('input',render);['buscaDemanda','filtroTipoDemanda','filtroStatusDemanda','filtroBairroDemanda'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderDemandas));['filtroTipoDemanda','filtroStatusDemanda'].forEach(id=>document.getElementById(id)?.addEventListener('change',renderDemandas));window.imprimirPessoas=()=>window.print();document.addEventListener('DOMContentLoaded',()=>{render();renderDemandas();renderAgenda();renderBirthdays();atualizarPainel();mostrarAba('painel')});window.render=render;window.renderDemandas=renderDemandas;window.renderAgenda=renderAgenda;window.renderBirthdays=renderBirthdays;window.getBirthdays=getBirthdays;
+
+// Sincronização visual: mantém o estado em memória alinhado ao localStorage atualizado pelo banco-v6.
+let __gabineteUiLastRaw=localStorage.getItem(KEY)||'';
+setInterval(()=>{
+  try{
+    const raw=localStorage.getItem(KEY)||'';
+    if(!raw||raw===__gabineteUiLastRaw)return;
+    const fresh=JSON.parse(raw);
+    if(!fresh||typeof fresh!=='object')return;
+    __gabineteUiLastRaw=raw;
+    db=fresh;
+    db.people=Array.isArray(db.people)?db.people:[];
+    db.agenda=Array.isArray(db.agenda)?db.agenda:[];
+    render();renderDemandas();renderAgenda();renderBirthdays();atualizarPainel();
+  }catch(e){console.warn('Sincronização visual do Gabinete:',e)}
+},1000);
