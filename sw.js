@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v16';
+const CACHE_NAME = 'gabinete-lm-shell-v17';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3004', './style.css?v=2002'];
 
 self.addEventListener('install', event => {
@@ -23,7 +23,7 @@ self.addEventListener('fetch', event => {
         const patch2 = await p2.text();
         const p3 = await fetch('./dados-integridade-v1.js?v=1001', {cache:'no-store'});
         const patch3 = await p3.text();
-        const p4 = await fetch('./demanda-visual-fix-v1.js?v=1001', {cache:'no-store'});
+        const p4 = await fetch('./demanda-visual-fix-v1.js?v=1002', {cache:'no-store'});
         const patch4 = await p4.text();
         const override = `\n/* GABINETE LM — RESGATE FINAL v5 FORÇADO */\n(function(){\n'use strict';\nwindow.GabineteDB=window.GabineteDB||{};\nif(window.GabineteDB.resgateFinalV5){window.GabineteDB.resgatarTudo=window.GabineteDB.resgateFinalV5;window.GabineteDB.resgatarDemandas=window.GabineteDB.resgateFinalV5;window.GabineteDB.sincronizarResgate=window.GabineteDB.resgateFinalV5;}\n})();`;
         const p1 = isAppJs ? await (await fetch('./aniversarios-fix-v1.js?v=2005',{cache:'no-store'})).text() : '';
