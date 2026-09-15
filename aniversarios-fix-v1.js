@@ -33,10 +33,31 @@ async function resgatarDemandas(){const d=read();d.people.forEach(norm);localSto
 window.GabineteDB=window.GabineteDB||{};window.GabineteDB.resgatarTudo=resgatarDemandas;window.GabineteDB.resgatarDemandas=resgatarDemandas;
 })();
 
-/* Botão manual: mostra exatamente o que existe neste aparelho e o que foi enviado. */
+/* Botão manual de diagnóstico — substitui o comportamento antigo sem apagar nada. */
 (function(){
 'use strict';
-function instalar(){if(document.getElementById('btnSyncGabinete'))return;const b=document.createElement('button');b.id='btnSyncGabinete';b.type='button';b.textContent='🔄 Sincronizar agora';b.style.cssText='position:fixed;right:14px;bottom:18px;z-index:2147483646;border:0;border-radius:999px;padding:12px 16px;background:#e91e63;color:#fff;font:700 14px Arial;box-shadow:0 5px 18px #0003;cursor:pointer';b.onclick=async()=>{if(b.dataset.busy==='1')return;b.dataset.busy='1';b.disabled=true;b.textContent='⏳ Sincronizando...';try{const d=readLocal();const totalPeople=d.people.length;let totalDem=0;d.people.forEach(p=>{if(!Array.isArray(p.demandas))p.demandas=[];totalDem+=p.demandas.length;if(p.demanda&&!p.demandas.length)totalDem++});const t=document.getElementById('gabineteToast');if(t)t.textContent=`📦 Encontrado neste aparelho: ${totalPeople} cidadão(ãos) / ${totalDem} demanda(s)`;await new Promise(r=>setTimeout(r,400));if(window.GabineteDB?.resgatarTudo)await window.GabineteDB.resgatarTudo();if(window.GabineteDB?.sincronizar)await window.GabineteDB.sincronizar();if(window.GabineteDB?.atualizarAgora)await window.GabineteDB.atualizarAgora()}catch(e){console.error('[Gabinete LM] Sincronização manual:',e);alert('Não foi possível concluir a sincronização. Os dados locais foram preservados.');}finally{b.dataset.busy='0';b.disabled=false;b.textContent='🔄 Sincronizar agora'}};document.body.appendChild(b)}
-function readLocal(){try{const d=JSON.parse(localStorage.getItem('gabineteDigitalDemo')||'{"people":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}}
+function localData(){try{const d=JSON.parse(localStorage.getItem('gabineteDigitalDemo')||'{"people":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}}
+function toast(msg){const t=document.getElementById('gabineteToast');if(t){t.textContent=msg;t.style.display='block';}else alert(msg)}
+function instalar(){
+  const b=document.getElementById('btnSyncGabinete');
+  if(!b||b.dataset.v4==='1')return;
+  b.dataset.v4='1';
+  b.onclick=async()=>{
+    if(b.dataset.busy==='1')return;
+    b.dataset.busy='1';b.disabled=true;b.textContent='⏳ Enviando dados...';
+    try{
+      const d=localData();
+      let totalDem=0;
+      d.people.forEach(p=>{if(Array.isArray(p.demandas))totalDem+=p.demandas.length;else if(p.demanda)totalDem++});
+      toast(`📦 LOCAL DESTE APARELHO\n👥 ${d.people.length} cidadão(ãos)\n📋 ${totalDem} demanda(s)\n\nEnviando...`);
+      const r=window.GabineteDB?.resgatarTudo?await window.GabineteDB.resgatarTudo():null;
+      if(window.GabineteDB?.sincronizar)await window.GabineteDB.sincronizar();
+      if(window.GabineteDB?.atualizarAgora)await window.GabineteDB.atualizarAgora();
+      if(r)toast(`✅ SINCRONIZAÇÃO CONCLUÍDA\n\n📦 Local: ${r.people} cidadãos / ${r.demandas} demandas\n☁️ Enviados: ${r.pc} cidadãos / ${r.dc} demandas${r.pf||r.df?`\n⚠️ Erros: ${r.pf} cidadãos / ${r.df} demandas`:''}`);
+    }catch(e){console.error('[Gabinete LM] diagnóstico:',e);toast('❌ Não foi possível concluir.\n\nOs dados locais foram preservados. Veja o console para o erro.');}
+    finally{b.dataset.busy='0';b.disabled=false;b.textContent='🔄 Sincronizar agora'}
+  };
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',instalar,{once:true});else instalar();
+setTimeout(instalar,1000);setTimeout(instalar,3000);
 })();
