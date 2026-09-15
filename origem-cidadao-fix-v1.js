@@ -1,0 +1,20 @@
+/* GABINETE LM — ESTADO + CIDADE DE NASCIMENTO v1 */
+(function(){'use strict';
+const KEY='gabineteDigitalDemo';
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const read=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}};
+function form(){return document.getElementById('formCadastro')}
+function inject(){const f=form();if(!f||f.dataset.origemV1)return;const city=f.elements.cidadeOrigem;if(!city)return;f.dataset.origemV1='1';
+  const oldLabel=city.closest('.campo')?.querySelector('label');if(oldLabel)oldLabel.textContent='Cidade de nascimento / origem';city.placeholder='Ex.: Belém';
+  if(!f.elements.estadoOrigem){const box=document.createElement('div');box.className='campo';box.innerHTML='<label>Estado de nascimento</label><select name="estadoOrigem"><option value="">Selecione</option><option>Pará</option><option>Acre</option><option>Alagoas</option><option>Amapá</option><option>Amazonas</option><option>Bahia</option><option>Ceará</option><option>Distrito Federal</option><option>Espírito Santo</option><option>Goiás</option><option>Maranhão</option><option>Mato Grosso</option><option>Mato Grosso do Sul</option><option>Minas Gerais</option><option>Paraná</option><option>Paraíba</option><option>Pernambuco</option><option>Piauí</option><option>Rio de Janeiro</option><option>Rio Grande do Norte</option><option>Rio Grande do Sul</option><option>Rondônia</option><option>Roraima</option><option>Santa Catarina</option><option>São Paulo</option><option>Sergipe</option><option>Tocantins</option></select>';const parent=city.closest('.campo')?.parentNode;if(parent)parent.insertBefore(box,city.closest('.campo').nextSibling)}
+  const pAtual=read().people.find(p=>String(p.id)===String(window.editandoId||''));if(pAtual&&f.elements.estadoOrigem)f.elements.estadoOrigem.value=pAtual.estadoOrigem||extrairEstado(pAtual.cidadeOrigem||'');
+  f.addEventListener('submit',()=>setTimeout(salvarOrigem,0));
+}
+function extrairEstado(v){const s=String(v||'').trim();const m=s.match(/(?:-|—|\/|,|\s)\s*(Pará|Acre|Alagoas|Amapá|Amazonas|Bahia|Ceará|Distrito Federal|Espírito Santo|Goiás|Maranhão|Mato Grosso|Mato Grosso do Sul|Minas Gerais|Paraná|Paraíba|Pernambuco|Piauí|Rio de Janeiro|Rio Grande do Norte|Rio Grande do Sul|Rondônia|Roraima|Santa Catarina|São Paulo|Sergipe|Tocantins)$/i);return m?m[1]:''}
+function salvarOrigem(){const f=form();if(!f)return;const city=String(f.elements.cidadeOrigem?.value||'').trim(),state=String(f.elements.estadoOrigem?.value||'').trim();const d=read();const nome=String(f.elements.nome?.value||'').trim();const p=d.people.find(x=>String(x.nome||'').trim()===nome)||d.people[0];if(!p)return;p.cidadeOrigem=city;p.estadoOrigem=state;localStorage.setItem(KEY,JSON.stringify(d));}
+function preencher(){const f=form();if(!f||!f.elements.estadoOrigem)return;const nome=String(f.elements.nome?.value||'').trim();if(!nome)return;const p=read().people.find(x=>String(x.nome||'').trim()===nome);if(!p)return;f.elements.cidadeOrigem.value=String(p.cidadeOrigem||'').replace(/\s*(?:-|—)\s*(?:Pará|Acre|Alagoas|Amapá|Amazonas|Bahia|Ceará|Distrito Federal|Espírito Santo|Goiás|Maranhão|Mato Grosso|Mato Grosso do Sul|Minas Gerais|Paraná|Paraíba|Pernambuco|Piauí|Rio de Janeiro|Rio Grande do Norte|Rio Grande do Sul|Rondônia|Roraima|Santa Catarina|São Paulo|Sergipe|Tocantins)$/i,'').trim();f.elements.estadoOrigem.value=p.estadoOrigem||extrairEstado(p.cidadeOrigem||'')||'';}
+function formatar(p){const city=String(p?.cidadeOrigem||'').trim(),state=String(p?.estadoOrigem||'').trim();if(city&&state)return city+' / '+state;if(city)return city;if(state)return state;return 'Não informado'}
+window.GabineteLM_OrigemFix={formatar,inject};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{inject();setTimeout(preencher,200)});else{inject();setTimeout(preencher,200)}
+setInterval(()=>{inject();preencher()},1500);
+})();
