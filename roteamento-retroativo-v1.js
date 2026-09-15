@@ -1,4 +1,4 @@
-/* GABINETE LM — ROTEAMENTO RETROATIVO v4
+/* GABINETE LM — ROTEAMENTO RETROATIVO v5
    Atualiza demandas antigas confirmadas pelo gabinete.
    Não apaga nem duplica registros. Preserva dados já preenchidos quando não há
    uma correção explicitamente definida abaixo.
@@ -14,9 +14,7 @@ const ATUALIZACOES={
   'leigiel':{demanda:'Tomografia lombo-sacra e cervical',tipo:'Saúde',destino:DEST_SAUDE},
   'legiel':{demanda:'Tomografia lombo-sacra e cervical',tipo:'Saúde',destino:DEST_SAUDE},
   'joel':{demanda:'Tomografia lombo-sacra',tipo:'Saúde',destino:DEST_SAUDE},
-  'tainara':{demanda:'Endoscopia digestivo alta',tipo:'Saúde',destino:DEST_SAUDE},
-  'kelison':{demanda:'Oftalmologista',tipo:'Saúde',destino:DEST_SAUDE},
-  'roselene':{demanda:'Oftalmologista',tipo:'Saúde',destino:DEST_SAUDE}
+  'tainara':{demanda:'Endoscopia digestivo alta',tipo:'Saúde',destino:DEST_SAUDE}
 };
 const read=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];d.agenda=Array.isArray(d.agenda)?d.agenda:[];return d}catch(_){return{people:[],agenda:[]}}};
 const norm=v=>String(v??'').trim();
