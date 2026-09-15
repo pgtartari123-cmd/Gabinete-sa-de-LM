@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v21';
+const CACHE_NAME = 'gabinete-lm-shell-v22';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3007', './style.css?v=2002'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -13,8 +13,8 @@ self.addEventListener('fetch', event => {
     const p4=await (await fetch('./demanda-visual-fix-v1.js?v=1005',{cache:'no-store'})).text();
     const p5=await (await fetch('./origem-cidadao-fix-v1.js?v=1003',{cache:'no-store'})).text();
     const p6=await (await fetch('./ios-compat-v1.js?v=1003',{cache:'no-store'})).text();
-    const p7=await (await fetch('./sincronizacao-estavel-v1.js?v=1002',{cache:'no-store'})).text();
-    const p8=await (await fetch('./cadastro-demanda-estavel-v1.js?v=1001',{cache:'no-store'})).text();
+    const p7=await (await fetch('./sincronizacao-estavel-v1.js?v=1003',{cache:'no-store'})).text();
+    const p8=await (await fetch('./cadastro-demanda-estavel-v1.js?v=1002',{cache:'no-store'})).text();
     const p9=await (await fetch('./roteamento-retroativo-v1.js?v=1001',{cache:'no-store'})).text();
     const override=`\n(function(){'use strict';window.GabineteDB=window.GabineteDB||{};if(window.GabineteDB.resgateFinalV5){window.GabineteDB.resgatarTudo=window.GabineteDB.resgateFinalV5;window.GabineteDB.resgatarDemandas=window.GabineteDB.resgateFinalV5;window.GabineteDB.sincronizarResgate=window.GabineteDB.resgateFinalV5;}})();`;
     const p1=isAppJs?await (await fetch('./aniversarios-fix-v1.js?v=2008',{cache:'no-store'})).text():'';
