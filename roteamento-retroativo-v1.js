@@ -1,4 +1,4 @@
-/* GABINETE LM — ROTEAMENTO RETROATIVO v3
+/* GABINETE LM — ROTEAMENTO RETROATIVO v4
    Atualiza demandas antigas confirmadas pelo gabinete.
    Não apaga nem duplica registros. Preserva dados já preenchidos quando não há
    uma correção explicitamente definida abaixo.
@@ -14,7 +14,9 @@ const ATUALIZACOES={
   'leigiel':{demanda:'Tomografia lombo-sacra e cervical',tipo:'Saúde',destino:DEST_SAUDE},
   'legiel':{demanda:'Tomografia lombo-sacra e cervical',tipo:'Saúde',destino:DEST_SAUDE},
   'joel':{demanda:'Tomografia lombo-sacra',tipo:'Saúde',destino:DEST_SAUDE},
-  'tainara':{demanda:'Endoscopia digestivo alta',tipo:'Saúde',destino:DEST_SAUDE}
+  'tainara':{demanda:'Endoscopia digestivo alta',tipo:'Saúde',destino:DEST_SAUDE},
+  'kelison':{demanda:'Oftalmologista',tipo:'Saúde',destino:DEST_SAUDE},
+  'roselene':{demanda:'Oftalmologista',tipo:'Saúde',destino:DEST_SAUDE}
 };
 const read=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];d.agenda=Array.isArray(d.agenda)?d.agenda:[];return d}catch(_){return{people:[],agenda:[]}}};
 const norm=v=>String(v??'').trim();
@@ -25,11 +27,10 @@ function aplicarAtualizacao(p,u){
   let mudou=false;
   let ds=Array.isArray(p.demandas)?p.demandas:[];
   if(!ds.length){
-    const id=(crypto?.randomUUID?crypto.randomUUID():Date.now().toString());
+    const id=(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString());
     ds=[{id,demanda:u.demanda,tipoDemanda:u.tipo,tipo:u.tipo,procedimento:'',status:p.status||'Pendente',destinoEnvio:u.destino,criadoEm:new Date().toISOString(),atualizadoEm:new Date().toISOString()}];
     p.demandas=ds;mudou=true;
   }else{
-    // Atualiza a demanda principal/mais recente que estava sem informação.
     let alvo=ds[ds.length-1];
     const semInfo=x=>!norm(x.demanda||x.descricao)&&!norm(x.procedimento);
     const vazio=ds.find(semInfo); if(vazio)alvo=vazio;
@@ -38,9 +39,8 @@ function aplicarAtualizacao(p,u){
     if(norm(alvo.tipoDemanda)!==u.tipo){alvo.tipoDemanda=u.tipo;mudou=true}
     if(norm(alvo.tipo)!==u.tipo){alvo.tipo=u.tipo;mudou=true}
     if(norm(alvo.destinoEnvio)!==u.destino){alvo.destinoEnvio=u.destino;mudou=true}
-    alvo.atualizadoEm=new Date().toISOString();
+    if(mudou)alvo.atualizadoEm=new Date().toISOString();
   }
-  const last=p.demandas[p.demandas.length-1];
   if(norm(p.demanda)!==u.demanda){p.demanda=u.demanda;mudou=true}
   if(norm(p.tipoDemanda)!==u.tipo){p.tipoDemanda=u.tipo;mudou=true}
   if(norm(p.tipo)!==u.tipo){p.tipo=u.tipo;mudou=true}
@@ -64,6 +64,5 @@ function corrigir(){
 }
 window.GabineteLM_RoteamentoRetroativo={corrigir};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(corrigir,300));else setTimeout(corrigir,300);
-// Uma execução periódica leve apenas para pegar dados locais recém-chegados de outro dispositivo.
 setInterval(corrigir,5000);
 })();
