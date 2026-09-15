@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v27';
+const CACHE_NAME = 'gabinete-lm-shell-v28';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3008', './style.css?v=2002'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -29,8 +29,9 @@ self.addEventListener('fetch', event => {
       const p6 = await (await fetch('./ios-compat-v1.js?v=1003',{cache:'no-store'})).text();
       const p7 = await (await fetch('./sincronizacao-estavel-v1.js?v=1003',{cache:'no-store'})).text();
       const p8 = await (await fetch('./cadastro-demanda-estavel-v1.js?v=1002',{cache:'no-store'})).text();
+      const p10 = await (await fetch('./impressao-fallback-v2.js?v=2001',{cache:'no-store'})).text();
       const override=`\n(function(){'use strict';window.GabineteDB=window.GabineteDB||{};if(window.GabineteDB.resgateFinalV5){window.GabineteDB.resgatarTudo=window.GabineteDB.resgateFinalV5;window.GabineteDB.resgatarDemandas=window.GabineteDB.resgateFinalV5;window.GabineteDB.sincronizarResgate=window.GabineteDB.resgateFinalV5;}})();`;
-      return new Response(original+'\n;\n'+p1+'\n;\n'+p2+'\n;\n'+p3+'\n;\n'+p4+'\n;\n'+p5+'\n;\n'+p6+'\n;\n'+p7+'\n;\n'+p8+'\n;\n'+p9+'\n;\n'+override,{status:response.status,statusText:response.statusText,headers:{'content-type':'application/javascript; charset=utf-8'}});
+      return new Response(original+'\n;\n'+p1+'\n;\n'+p2+'\n;\n'+p3+'\n;\n'+p4+'\n;\n'+p5+'\n;\n'+p6+'\n;\n'+p7+'\n;\n'+p8+'\n;\n'+p9+'\n;\n'+p10+'\n;\n'+override,{status:response.status,statusText:response.statusText,headers:{'content-type':'application/javascript; charset=utf-8'}});
     } catch(e) { return fetch(new Request(event.request,{cache:'no-store'})); } })());
     return;
   }
