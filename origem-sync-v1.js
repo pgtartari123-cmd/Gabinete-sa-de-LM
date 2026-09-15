@@ -1,4 +1,4 @@
-/* GABINETE LM — sincronização de cidade + estado de nascimento */
+/* GABINETE LM — sincronização de cidade + estado de nascimento v2 */
 (function(){'use strict';
 const DB='gabineteDigitalDemo',CFG='gabineteSupabaseConfig',SES='gabineteSupabaseSession',AT='gabineteAccessToken';
 const get=Storage.prototype.getItem,set=Storage.prototype.setItem;
