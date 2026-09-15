@@ -67,3 +67,26 @@ function instalar(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',instalar,{once:true});else instalar();
 })();
+
+/* GABINETE LM — resgate robusto de demandas v2
+   Envia cada demanda separadamente para evitar que uma linha com problema bloqueie as demais.
+   Nunca apaga dados locais.
+*/
+(function(){
+'use strict';
+const DB='gabineteDigitalDemo',CFG='gabineteSupabaseConfig',SES='gabineteSupabaseSession',AT='gabineteAccessToken';
+const get=(k)=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+const token=()=>localStorage.getItem(AT)||get(SES)?.access_token||'';
+const cfg=()=>get(CFG);
+const base=()=>String(cfg()?.url||'').replace(/\/+$/,'');
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)});
+const valid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''));
+const date=v=>{v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const m=v.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);return m?`${m[3]}-${m[2]}-${m[1]}`:null};
+function read(){try{const d=JSON.parse(localStorage.getItem(DB)||'{"people":[]}');d.people=Array.isArray(d.people)?d.people:[];return d}catch(e){return{people:[]}}}
+async function request(path,opts={}){const c=cfg();if(!c?.url||!c?.anonKey)throw Error('Supabase não configurado.');const h=Object.assign({apikey:c.anonKey,'Content-Type':'application/json',Authorization:'Bearer '+token()},opts.headers||{});let r=await fetch(base()+path,Object.assign({},opts,{headers:h}));if(r.status===401){const s=get(SES),rt=s?.refresh_token;if(!rt)throw Error('Sessão expirada. Entre novamente.');const rr=await fetch(base()+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:c.anonKey,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});const j=await rr.json().catch(()=>({}));if(!rr.ok||!j.access_token)throw Error('Sessão expirada. Entre novamente.');localStorage.setItem(SES,JSON.stringify(Object.assign({},s,j)));localStorage.setItem(AT,j.access_token);h.Authorization='Bearer '+j.access_token;r=await fetch(base()+path,Object.assign({},opts,{headers:h}))}if(!r.ok){const t=await r.text();throw Error('HTTP '+r.status+': '+t)}return r}
+function norm(p){if(!Array.isArray(p.demandas))p.demandas=[];if(p.demanda&&!p.demandas.length)p.demandas.push({id:valid(p.demandaId)?p.demandaId:uid(),demanda:p.demanda,tipoDemanda:p.tipoDemanda||p.tipo||'Outro',procedimento:p.procedimento||'',status:p.status||'Pendente',observacoes:p.observacoes||'',prioridade:p.prioridade||'Normal',responsavel:p.responsavel||'',prazo:p.prazo||'',encaminhamento:p.encaminhamento||'',retorno:p.retorno||'',protocolo:p.protocolo||'',secretaria:p.secretaria||'',anexos:Array.isArray(p.anexos)?p.anexos:[],dataAbertura:p.dataAbertura||'',dataSaida:p.dataSaida||'',destinoEnvio:p.destinoEnvio||'',atualizadoEm:p.atualizadoEm||p.criadoEm||new Date().toISOString(),criadoEm:p.criadoEm||new Date().toISOString()});p.demandas.forEach(d=>{if(!valid(d.id))d.id=uid();d.status=['Pendente','Em andamento','Concluído'].includes(d.status)?d.status:'Pendente';d.prioridade=['Baixa','Normal','Alta','Urgente'].includes(d.prioridade)?d.prioridade:'Normal';d.atualizadoEm=d.atualizadoEm||d.criadoEm||p.atualizadoEm||new Date().toISOString()});return p}
+async function resgatarDemandas(){const d=read(),rows=[];d.people.forEach(p=>{norm(p);p.demandas.forEach(x=>rows.push({id:x.id,cidadao_id:p.id,descricao:x.demanda||'',tipo:x.tipoDemanda||x.tipo||'Outro',procedimento:x.procedimento||null,status:['Pendente','Em andamento','Concluído'].includes(x.status)?x.status:'Pendente',observacoes:x.observacoes||null,prioridade:['Baixa','Normal','Alta','Urgente'].includes(x.prioridade)?x.prioridade:'Normal',responsavel:x.responsavel||null,prazo:date(x.prazo),encaminhamento:x.encaminhamento||null,retorno:x.retorno||null,secretaria:x.secretaria||null,anexos:Array.isArray(x.anexos)?x.anexos:[],atualizado_em:x.atualizadoEm||x.criadoEm||null,concluido_em:x.concluidoEm||null,protocolo:x.protocolo||null,destino_envio:x.destinoEnvio||p.destinoEnvio||null,data_saida:date(x.dataSaida||p.dataSaida)}))});let ok=0,fail=0;for(const row of rows){try{await request('/rest/v1/demandas?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify([row])});ok++}catch(e){fail++;console.error('[Gabinete LM] Demanda não enviada',row,e)}}if(window.GabineteDB?.atualizarAgora)await window.GabineteDB.atualizarAgora();const msg=`Demandas resgatadas: ${ok} enviada(s)${fail?` e ${fail} com erro`:''}.`;let t=document.getElementById('gabineteToast');if(t)t.textContent='✓ '+msg;else alert(msg);return{ok,fail,total:rows.length}}
+window.GabineteDB=window.GabineteDB||{};window.GabineteDB.resgatarDemandas=resgatarDemandas;
+const old=window.GabineteDB.sincronizarResgate;
+window.GabineteDB.sincronizarResgate=async function(){if(old)await old();return resgatarDemandas()};
+})();
