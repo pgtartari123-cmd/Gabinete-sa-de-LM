@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v11';
+const CACHE_NAME = 'gabinete-lm-shell-v12';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3002', './style.css?v=2002'];
 
 self.addEventListener('install', event => {
@@ -31,10 +31,10 @@ self.addEventListener('fetch', event => {
         const response = await fetch(new Request(event.request, { cache: 'no-store' }));
         if(!isAppJs)return response;
         const original = await response.text();
-        const patchResponse = await fetch('./aniversarios-fix-v1.js?v=2004', { cache: 'no-store' });
+        const patchResponse = await fetch('./aniversarios-fix-v1.js?v=2005', { cache: 'no-store' });
         const patch = await patchResponse.text();
         const override = `
-/* GABINETE LM — OVERRIDE FINAL DE SINCRONIZAÇÃO v4 */
+/* GABINETE LM — OVERRIDE FINAL DE SINCRONIZAÇÃO v5 */
 (function(){
 'use strict';
 window.GabineteDB=window.GabineteDB||{};
@@ -57,9 +57,10 @@ function instalarSyncFinal(){
       if(window.GabineteDB.resgatarTudo){
         const r=await window.GabineteDB.resgatarTudo();
         if(window.GabineteDB.atualizarAgora)await window.GabineteDB.atualizarAgora();
-        t.textContent='✅ SINCRONIZAÇÃO CONCLUÍDA\\n\\n📦 Local: '+r.people+' cidadãos / '+r.demandas+' demandas\\n☁️ Enviados: '+r.pc+' cidadãos / '+r.dc+' demandas'+(r.pf||r.df?'\\n⚠️ Erros: '+r.pf+' cidadãos / '+r.df+' demandas':'');
+        if(r)t.textContent='✅ SINCRONIZAÇÃO CONCLUÍDA\\n\\n📦 Local: '+r.people+' cidadãos / '+r.demandas+' demandas\\n☁️ Enviados: '+r.pc+' cidadãos / '+r.dc+' demandas'+(r.pf||r.df?'\\n⚠️ Erros: '+r.pf+' cidadãos / '+r.df+' demandas':'')+'\\n\\nOs dados locais foram preservados.';
+        else throw Error('O resgate não retornou resultado');
       }else throw Error('Módulo de sincronização não carregado');
-    }catch(e){console.error('[Gabinete LM] Sync final:',e);let t=document.getElementById('gabineteToast');if(t)t.textContent='❌ Não foi possível concluir a sincronização.\\n\\nOs dados locais foram preservados.';}
+    }catch(e){console.error('[Gabinete LM] Sync final:',e);let t=document.getElementById('gabineteToast');if(t)t.textContent='❌ Não foi possível concluir a sincronização.\\n\\n'+(e.message||e)+'\\n\\nOs dados locais foram preservados.';}
     finally{b.dataset.busy='0';b.disabled=false;b.textContent='🔄 Sincronizar agora'}
   };
 }
