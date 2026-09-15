@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v26';
+const CACHE_NAME = 'gabinete-lm-shell-v27';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3008', './style.css?v=2002'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -7,6 +7,11 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url); if (url.origin !== self.location.origin) return;
   const isAppJs = /\/app\.js$/i.test(url.pathname);
   const isAniversarios = /\/aniversarios-fix-v1\.js$/i.test(url.pathname);
+  const isImpressao = /\/controle-pastas-impressao-v1\.js$/i.test(url.pathname);
+  if (isImpressao) {
+    event.respondWith(fetch(new Request(event.request,{cache:'no-store'})).catch(()=>caches.match(event.request)));
+    return;
+  }
   if (isAppJs || isAniversarios) {
     event.respondWith((async()=>{ try {
       const response = await fetch(new Request(event.request,{cache:'no-store'}));
