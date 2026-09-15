@@ -1,8 +1,8 @@
-/* GABINETE LM — CIDADE + ESTADO DE NASCIMENTO v10 */
+/* GABINETE LM — CIDADE + ESTADO DE NASCIMENTO v11 */
 (function(){'use strict';
 const KEY='gabineteDigitalDemo';
 const CFG='gabineteSupabaseConfig',SES='gabineteSupabaseSession',AT='gabineteAccessToken';
-const ESTADOS=['Pará','Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Distrito Federal','Espírito Santo','Goiás','Maranhão','Mato Grosso','Mato Grosso do Sul','Minas Gerais','Minas Gerais','Paraná','Paraíba','Pernambuco','Piauí','Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina','São Paulo','Sergipe','Tocantins'];
+const ESTADOS=['Pará','Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Distrito Federal','Espírito Santo','Goiás','Maranhão','Mato Grosso','Mato Grosso do Sul','Minas Gerais','Paraná','Paraíba','Pernambuco','Piauí','Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina','São Paulo','Sergipe','Tocantins'];
 const norm=s=>String(s||'').trim().replace(/\s+/g,' ');
 const ehEstado=v=>ESTADOS.some(x=>x.toLowerCase()===norm(v).toLowerCase());
 const read=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];d.agenda=Array.isArray(d.agenda)?d.agenda:[];return d}catch(e){return{people:[],agenda:[]}}};
@@ -20,8 +20,8 @@ async function sincronizarNuvem(){const c=cfg(),t=token();if(!c?.url||!c?.anonKe
 function formatar(p){const x=campos(p);if(x.city&&x.state)return x.city+' / '+x.state;return x.city||x.state||'Não informado'}
 function prepararDados(){const d=read();let mudou=false;d.people.forEach(p=>{const x=campos(p);if(norm(p.cidadeNascimento)!==x.city){p.cidadeNascimento=x.city;mudou=true}if(norm(p.estadoNascimento)!==x.state){p.estadoNascimento=x.state;mudou=true}if(norm(p.cidadeOrigem)!==x.city){p.cidadeOrigem=x.city;mudou=true}if(norm(p.estadoOrigem)!==x.state){p.estadoOrigem=x.state;mudou=true}const combinado=x.city&&x.state?x.city+' / '+x.state:(x.city||x.state);if(norm(p.origemNascimento)!==combinado){p.origemNascimento=combinado;mudou=true}});if(mudou)localStorage.setItem(KEY,JSON.stringify(d))}
 window.GabineteLM_OrigemFix={formatar,inject,prepararDados};
-function envolverEdicao(){if(typeof window.editarCadastro!=='function'||window.editarCadastro.__origemV10)return;const original=window.editarCadastro;const wrapped=function(id){original(id);setTimeout(()=>{const p=read().people.find(x=>x.id===id);if(p)preencherPessoa(p)},80)};wrapped.__origemV10=true;window.editarCadastro=wrapped}
-function iniciar(){prepararDados();inject();envolverEdicao();const f=form();if(f&&!f.dataset.nascimentoListenerV10){f.dataset.nascimentoListenerV10='1';f.addEventListener('submit',()=>setTimeout(salvarLocal,350))}}
+function envolverEdicao(){if(typeof window.editarCadastro!=='function'||window.editarCadastro.__origemV11)return;const original=window.editarCadastro;const wrapped=function(id){original(id);setTimeout(()=>{const p=read().people.find(x=>x.id===id);if(p)preencherPessoa(p)},80)};wrapped.__origemV11=true;window.editarCadastro=wrapped}
+function iniciar(){prepararDados();inject();envolverEdicao();const f=form();if(f&&!f.dataset.nascimentoListenerV11){f.dataset.nascimentoListenerV11='1';f.addEventListener('submit',()=>salvarLocal(),true)}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});else iniciar();
 window.GabineteLM_OrigemSync=sincronizarNuvem;
 setInterval(()=>{inject();envolverEdicao()},3000);
