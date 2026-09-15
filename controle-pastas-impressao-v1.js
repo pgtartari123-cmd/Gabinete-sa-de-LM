@@ -1,4 +1,4 @@
-/* GABINETE LM — impressão v1.8 */
+/* GABINETE LM — impressão v1.9 */
 (function(){'use strict';
 const KEY='gabineteDigitalDemo';
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -8,7 +8,21 @@ const status=(p,d)=>d.status||p.status||'Pendente';
 const destino=(p,d)=>d.destinoEnvio||d.encaminhamento||d.secretaria||p.destinoEnvio||'';
 const procedimento=d=>String(d.procedimento||d.demanda||d.tipoDemanda||d.tipo||'Não informado').trim();
 const enderecoCep=p=>{const e=String(p.endereco||'Não informado').trim();const c=String(p.cep||'').trim();return c&&c!=='Não informado'?`${e} — CEP: ${c}`:e};
-const origem=p=>{if(window.GabineteLM_OrigemFix?.formatar)return window.GabineteLM_OrigemFix.formatar(p);const city=String(p.cidadeOrigem||'').trim(),state=String(p.estadoOrigem||'').trim();return city&&state?city+' / '+state:city||state||'Não informado'};
+function origem(p){
+  if(window.GabineteLM_OrigemFix?.formatar){const v=window.GabineteLM_OrigemFix.formatar(p);if(v&&v!=='Não informado')return v}
+  const city=String(p?.cidadeOrigem||p?.cidadeNascimento||'').trim();
+  const state=String(p?.estadoOrigem||p?.estadoNascimento||'').trim();
+  if(city&&state)return city+' / '+state;
+  if(city)return city;
+  if(state)return state;
+  const raw=String(p?.origemNascimento||p?.cidade_origem||'').trim();
+  if(raw){
+    const m=raw.match(/^(.*?)\s*(?:\/|-|—|,)\s*(Pará|Acre|Alagoas|Amapá|Amazonas|Bahia|Ceará|Distrito Federal|Espírito Santo|Goiás|Maranhão|Mato Grosso|Mato Grosso do Sul|Minas Gerais|Paraná|Paraíba|Pernambuco|Piauí|Rio de Janeiro|Rio Grande do Norte|Rio Grande do Sul|Rondônia|Roraima|Santa Catarina|São Paulo|Sergipe|Tocantins)$/i);
+    if(m)return m[1].trim()+' / '+m[2].trim();
+    return raw;
+  }
+  return 'Não informado';
+}
 function grupo(p,d){const s=status(p,d),dest=destino(p,d);if(s==='Concluído')return'finalizados';if(dest||s==='Em andamento')return'enviados';return'pendentes'}
 function styles(){if(document.getElementById('cpStyle'))return;const s=document.createElement('style');s.id='cpStyle';s.textContent=`.cp-box{margin:14px 0}.cp-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cp-tab{border:1px solid #d8dee9;background:#fff;border-radius:14px;padding:13px;text-align:left;cursor:pointer;font:inherit}.cp-tab strong{display:block;font-size:20px;margin-top:4px}.cp-tab.ativo{outline:3px solid #e91e63}.cp-item{display:flex;gap:10px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:13px;padding:12px;margin:8px 0;background:#fff}.cp-item input{width:20px;height:20px;margin-top:3px;flex:0 0 auto}.cp-item small{color:#64748b}.cp-procs{display:flex;flex-direction:column;gap:6px;margin-top:7px}.cp-proc{display:flex;align-items:center;gap:7px;font-size:14px}.cp-proc input{margin:0;width:18px;height:18px}.cp-endereco{margin-top:5px;font-size:12px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cp-acoes-pessoa{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.cp-mini{font-size:12px;padding:5px 9px}.cp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cp-print{display:none}.cp-print .folha{width:100%;display:grid;grid-template-rows:repeat(5,1fr);gap:3mm;box-sizing:border-box;page-break-after:always;break-after:page}.cp-print .ficha{box-sizing:border-box;border:1px solid #222;padding:2.5mm 4mm;overflow:hidden;page-break-inside:avoid;break-inside:avoid;font-size:7.6pt;line-height:1.05;min-height:0}@media(max-width:650px){.cp-tabs{grid-template-columns:1fr}.cp-item{padding:10px}}`;document.head.appendChild(s)}
 function allDem(){const d=read();return d.people.flatMap(p=>demandas(p).map(x=>({p,d:x,grupo:grupo(p,x)})))}
