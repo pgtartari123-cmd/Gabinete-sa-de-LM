@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v14';
+const CACHE_NAME = 'gabinete-lm-shell-v15';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3003', './style.css?v=2002'];
 
 self.addEventListener('install', event => {
@@ -19,13 +19,16 @@ self.addEventListener('fetch', event => {
       try {
         const response = await fetch(new Request(event.request, {cache:'no-store'}));
         const original = await response.text();
-        const p2 = await fetch('./resgate-final-v5.js?v=5002', {cache:'no-store'});
+        const p2 = await fetch('./resgate-final-v5.js?v=5003', {cache:'no-store'});
         const patch2 = await p2.text();
+        const p3 = await fetch('./dados-integridade-v1.js?v=1001', {cache:'no-store'});
+        const patch3 = await p3.text();
         const override = `\n/* GABINETE LM — RESGATE FINAL v5 FORÇADO */\n(function(){\n'use strict';\nwindow.GabineteDB=window.GabineteDB||{};\nif(window.GabineteDB.resgateFinalV5){window.GabineteDB.resgatarTudo=window.GabineteDB.resgateFinalV5;window.GabineteDB.resgatarDemandas=window.GabineteDB.resgateFinalV5;window.GabineteDB.sincronizarResgate=window.GabineteDB.resgateFinalV5;}\n})();`;
         const p1 = isAppJs ? await (await fetch('./aniversarios-fix-v1.js?v=2005',{cache:'no-store'})).text() : '';
+        const integrity = isAppJs ? patch3 : '';
         const headers = new Headers(response.headers);
         if(isAppJs || isAniversarios) headers.set('content-type','application/javascript; charset=utf-8');
-        const finalCode = isAppJs ? original+'\n;\n'+p1+'\n;\n'+patch2+'\n;\n'+override : isAniversarios ? original+'\n;\n'+patch2+'\n;\n'+override : original;
+        const finalCode = isAppJs ? original+'\n;\n'+p1+'\n;\n'+patch2+'\n;\n'+integrity+'\n;\n'+override : isAniversarios ? original+'\n;\n'+patch2+'\n;\n'+override : original;
         return new Response(finalCode,{status:response.status,statusText:response.statusText,headers});
       } catch(e) {
         return fetch(new Request(event.request,{cache:'no-store'}));
