@@ -1,8 +1,9 @@
-/* GABINETE LM — CORREÇÃO DEFINITIVA DE DEMANDAS v2
-   A interface precisa mostrar as demandas que estão dentro de p.demandas.
-   Mantém compatibilidade com os campos antigos p.demanda/p.tipoDemanda/etc.
-   Não apaga dados e também replica os dados da última demanda para os campos
-   antigos para que qualquer parte antiga da interface continue funcionando.
+/* GABINETE LM — CORREÇÃO DEFINITIVA DE DEMANDAS v3
+   Mantém a interface atual e corrige a origem da piscada.
+   A versão anterior redesenhava a tela a cada 250ms durante 30 segundos.
+   Agora a correção roda na abertura e somente quando uma sincronização
+   realmente altera os dados.
+   Não apaga dados.
 */
 (function(){
 'use strict';
@@ -130,6 +131,9 @@ window.verCadastro=verCorrigido;
 
 function ciclo(){try{aplicar()}catch(e){console.warn('[Gabinete LM] correção visual:',e)}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ciclo,{once:true});else ciclo();
-let n=0;
-const timer=setInterval(()=>{ciclo();if(++n>=120)clearInterval(timer)},250);
+
+/* Atualiza a visualização somente quando o sincronizador informa mudança real. */
+window.addEventListener('gabinete:sincronizado',()=>{
+  try{ciclo()}catch(e){console.warn('[Gabinete LM] atualização pós-sync:',e)}
+});
 })();
