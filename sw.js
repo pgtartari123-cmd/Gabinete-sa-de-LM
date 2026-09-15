@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gabinete-lm-shell-v23';
+const CACHE_NAME = 'gabinete-lm-shell-v24';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest?v=3008', './style.css?v=2002'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -20,7 +20,7 @@ self.addEventListener('fetch', event => {
       const p1 = await (await fetch('./aniversarios-fix-v1.js?v=2008',{cache:'no-store'})).text();
       const p3 = await (await fetch('./dados-integridade-v1.js?v=1004',{cache:'no-store'})).text();
       const p4 = await (await fetch('./demanda-visual-fix-v1.js?v=1005',{cache:'no-store'})).text();
-      const p5 = await (await fetch('./origem-cidadao-fix-v1.js?v=1003',{cache:'no-store'})).text();
+      const p5 = await (await fetch('./origem-cidadao-fix-v1.js?v=1004',{cache:'no-store'})).text();
       const p6 = await (await fetch('./ios-compat-v1.js?v=1003',{cache:'no-store'})).text();
       const p7 = await (await fetch('./sincronizacao-estavel-v1.js?v=1003',{cache:'no-store'})).text();
       const p8 = await (await fetch('./cadastro-demanda-estavel-v1.js?v=1002',{cache:'no-store'})).text();
