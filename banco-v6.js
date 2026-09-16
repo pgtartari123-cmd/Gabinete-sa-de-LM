@@ -1,4 +1,4 @@
-/* GABINETE DIGITAL — BANCO CENTRAL v10
+/* GABINETE DIGITAL — BANCO CENTRAL v11
    Supabase como fonte central + atualização resiliente.
    Renova JWT expirado, repete falhas transitórias e normaliza cidade/estado.
    Não apaga dados locais.
@@ -19,7 +19,15 @@ const uuid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'
 const valid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(v||''));
 const date=v=>{const s=norm(v);if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const m=s.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);return m?m[3]+'-'+m[2]+'-'+m[1]:null};
 function limparOrigem(v){let s=norm(v);if(!s)return{city:'',state:''};const parts=s.split(/\s*(?:\/|-|—|,)\s*/).filter(Boolean);let state='';let cityParts=[];parts.forEach(part=>{const st=states.find(x=>x.toLowerCase()===part.toLowerCase());if(st)state=st;else cityParts.push(part)});if(state)return{city:norm(cityParts.join(' / ')),state};if(isState(s))return{city:'',state:states.find(x=>x.toLowerCase()===s.toLowerCase())||s};return{city:s,state:''}}
-function origemCampos(p){let city=norm(p?.cidadeNascimento||p?.cidadeOrigem),state=norm(p?.estadoNascimento||p?.estadoOrigem);if(isState(city)){if(!state)state=city;city=''}if(!state){const s=norm(p?.origemNascimento),x=limparOrigem(s);if(x.state){if(!city)city=x.city;state=x.state}else if(!city)city=x.city}if(isState(city)){if(!state)state=city;city=''}return{city,state}}
+function origemCampos(p){
+  const candidates=[p?.cidadeNascimento,p?.cidadeOrigem,p?.origemNascimento].map(norm).filter(Boolean);
+  let city='',state='';
+  for(const raw of candidates){const x=limparOrigem(raw);if(!city&&x.city&&!isState(x.city))city=x.city;if(!state&&x.state)state=x.state;}
+  const stateFields=[p?.estadoNascimento,p?.estadoOrigem].map(norm).filter(Boolean);
+  for(const raw of stateFields){if(isState(raw)){state=states.find(s=>s.toLowerCase()===raw.toLowerCase())||raw;break}}
+  if(isState(city)){if(!state)state=states.find(s=>s.toLowerCase()===city.toLowerCase())||city;city=''}
+  return{city:norm(city),state:norm(state)}
+}
 function origem(p){const x=origemCampos(p);return x.city&&x.state?x.city+' / '+x.state:x.city||x.state||null}
 function normal(p){if(!valid(p.id))p.id=uuid();if(!Array.isArray(p.demandas))p.demandas=[];p.demandas=p.demandas.map(d=>{if(!valid(d.id))d.id=uuid();d.status=['Pendente','Em andamento','Concluído'].includes(d.status)?d.status:'Pendente';return d});return p}
 function merge(local,remote){const r=new Map((remote.people||[]).map(p=>[String(p.id),normal(p)])),out=[];for(const raw of(local.people||[])){const l=normal(raw),q=r.get(String(l.id));if(!q){out.push(l);continue}const lc=origemCampos(l),rc=origemCampos(q),city=lc.city||rc.city,state=lc.state||rc.state,merged=Object.assign({},q,l);merged.cidadeNascimento=city;merged.estadoNascimento=state;merged.cidadeOrigem=city;merged.estadoOrigem=state;merged.origemNascimento=city&&state?city+' / '+state:city||state||'';const dm=new Map((q.demandas||[]).map(d=>[String(d.id),d]));(l.demandas||[]).forEach(d=>dm.set(String(d.id),d));merged.demandas=[...dm.values()];out.push(merged);r.delete(String(l.id))}for(const p of r.values())out.push(p);return{people:out,agenda:remote.agenda||local.agenda||[]}}
