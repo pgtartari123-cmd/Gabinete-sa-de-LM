@@ -1,6 +1,6 @@
-/* GABINETE LM — CADASTRO/DEMANDA ESTÁVEL v5
-   Supabase como fonte central: toda gravação local tenta chegar ao banco imediatamente.
-   LocalStorage continua como proteção offline; nada é apagado.
+/* GABINETE LM — CADASTRO/DEMANDA ESTÁVEL v6
+   Supabase como fonte central. LocalStorage é proteção offline.
+   Gravações feitas pelo usuário são enviadas ao banco assim que possível.
 */
 (function(){'use strict';
 const DB='gabineteDigitalDemo';
@@ -13,8 +13,8 @@ function normalize(p){const antes=JSON.stringify(p);p.demandas=Array.isArray(p.d
 function instalar(){const f=document.getElementById('formCadastro');if(!f||f.dataset.demandaEstavel)return;f.dataset.demandaEstavel='1';f.addEventListener('submit',function(){setTimeout(()=>{try{const d=read();const nome=String(f.elements.nome?.value||'').trim();let p=d.people.find(x=>String(x.nome||'').trim()===nome);if(!p)return;const raw={};new FormData(f).forEach((v,k)=>raw[k]=String(v??'').trim());const city=String(raw.cidadeOrigem||'').trim(),state=String(raw.estadoOrigem||'').trim();if(city||state){p.cidadeNascimento=city;p.estadoNascimento=state;p.cidadeOrigem=city;p.estadoOrigem=state;p.origemNascimento=city&&state?city+' / '+state:(city||state)}normalize(p);const nd=normalDemand(raw,p);const i=p.demandas.findIndex(x=>String(x.id)===String(p.demandaId));if(i>=0)p.demandas[i]=nd;else p.demandas.push(nd);p.demandaId=nd.id;p.demanda=nd.demanda;p.tipoDemanda=nd.tipoDemanda;p.tipo=nd.tipo;p.procedimento=nd.procedimento;p.status=nd.status;p.destinoEnvio=nd.destinoEnvio;p.atualizadoEm=now();write(d);sincronizarCentral()}catch(e){console.error('Cadastro demanda estável:',e)}},80)},{capture:true})}
 function reparar(){try{const d=read();let mudou=false;d.people.forEach(p=>{if(normalize(p))mudou=true});if(mudou)write(d)}catch(e){console.warn(e)}}
 let timer=0,running=false,pending=false;
-async function sincronizarCentral(){clearTimeout(timer);timer=setTimeout(async()=>{if(running){pending=true;return}if(!navigator.onLine){pending=true;return}const fn=window.GabineteDB?.resgateFinalV5||window.GabineteDB?.resgatarDemandas||window.GabineteDB?.sincronizar;if(!fn){pending=true;return}running=true;try{await fn()}catch(e){console.warn('[Gabinete LM] gravação central:',e)}finally{running=false;if(pending){pending=false;sincronizarCentral()}}},120)}
-(function(){if(window.__gabineteWriteThroughV2)return;window.__gabineteWriteThroughV2=true;const originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&k===DB)sincronizarCentral()};window.addEventListener('online',sincronizarCentral);window.GabineteSyncImediato={agendar:sincronizarCentral}})();
+async function sincronizarCentral(){clearTimeout(timer);timer=setTimeout(async()=>{if(running){pending=true;return}if(!navigator.onLine){pending=true;return}const fn=window.GabineteDB?.sincronizar||window.GabineteDB?.resgateFinalV5||window.GabineteDB?.resgatarDemandas;if(!fn){pending=true;return}running=true;try{await fn()}catch(e){console.warn('[Gabinete LM] gravação central:',e)}finally{running=false;if(pending){pending=false;sincronizarCentral()}}},180)}
+(function(){if(window.__gabineteWriteThroughV3)return;window.__gabineteWriteThroughV3=true;const originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&k===DB&&!window.__gabineteCentralWriting)sincronizarCentral()};window.addEventListener('online',sincronizarCentral);window.GabineteSyncImediato={agendar:sincronizarCentral}})();
 window.GabineteLM_CadastroEstavel={reparar,normalizar:reparar};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{instalar();reparar();sincronizarCentral()});else{instalar();reparar();sincronizarCentral()}
 setInterval(instalar,1500);
