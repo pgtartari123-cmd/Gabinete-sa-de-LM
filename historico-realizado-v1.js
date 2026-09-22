@@ -31,7 +31,8 @@
         ['hospitalClinica','dataRealizacao','horaRealizacao'].forEach(k=>{const el=form.elements[k];if(el)el.value=''});
       }
     };
-    sel.addEventListener('change',sync);sync();
+    sel.addEventListener('change',sync);sel.dataset.hlmLast=sel.value;sync();
+    setInterval(()=>{if(!document.body.contains(sel))return;if(sel.value!==sel.dataset.hlmLast){sel.dataset.hlmLast=sel.value;sync()}},300);
     form.dataset.hlmRealizado='1';
   }
   function observe(){
