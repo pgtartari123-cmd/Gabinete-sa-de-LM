@@ -75,11 +75,12 @@
     d.prazo=form.elements.prazo?.value||d.prazo||'';
     d.responsavel=form.elements.responsavel?.value||d.responsavel||'';
     d.atendimentoRealizado=form.elements.atendimentoRealizado?.value||d.atendimentoRealizado||'';
+    d.tipoProcedimentoRealizado=form.elements.tipoProcedimentoRealizado?.value||d.tipoProcedimentoRealizado||'';
     d.hospitalClinica=form.elements.hospitalClinica?.value||d.hospitalClinica||'';
     d.dataRealizacao=form.elements.dataRealizacao?.value||d.dataRealizacao||'';
     d.horaRealizacao=form.elements.horaRealizacao?.value||d.horaRealizacao||'';
     d.atualizadoEm=new Date().toISOString();
-    p.demanda=demanda;p.tipoDemanda=d.tipoDemanda;p.tipo=d.tipoDemanda;p.procedimento=d.procedimento;p.status=d.status;p.prioridade=d.prioridade;p.prazo=d.prazo;p.responsavel=d.responsavel;p.atendimentoRealizado=d.atendimentoRealizado;p.hospitalClinica=d.hospitalClinica;p.dataRealizacao=d.dataRealizacao;p.horaRealizacao=d.horaRealizacao;p.demandaId=d.id;
+    p.demanda=demanda;p.tipoDemanda=d.tipoDemanda;p.tipo=d.tipoDemanda;p.procedimento=d.procedimento;p.status=d.status;p.prioridade=d.prioridade;p.prazo=d.prazo;p.responsavel=d.responsavel;p.atendimentoRealizado=d.atendimentoRealizado;p.tipoProcedimentoRealizado=d.tipoProcedimentoRealizado;p.hospitalClinica=d.hospitalClinica;p.dataRealizacao=d.dataRealizacao;p.horaRealizacao=d.horaRealizacao;p.demandaId=d.id;
     write(db);
     if(window.render)window.render();if(window.renderDemandas)window.renderDemandas();if(window.atualizarPainel)window.atualizarPainel();
   }
