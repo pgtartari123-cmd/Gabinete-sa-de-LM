@@ -27,9 +27,9 @@
     const sync=()=>{
       const on=sel.value==='Já realizado';
       detalhes.classList.toggle('ativo',on);
-      ['hospitalClinica','dataRealizacao','horaRealizacao'].forEach(k=>{
-        const el=form.elements[k];if(el)el.disabled=!on;
-      });
+      if(!on){
+        ['hospitalClinica','dataRealizacao','horaRealizacao'].forEach(k=>{const el=form.elements[k];if(el)el.value=''});
+      }
     };
     sel.addEventListener('change',sync);sync();
     form.dataset.hlmRealizado='1';
