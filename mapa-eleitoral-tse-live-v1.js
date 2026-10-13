@@ -15,7 +15,7 @@ async function getJSON(url){
   try{
    const target=url+(url.includes('?')?'&':'?')+'_gabinete_t='+Date.now()+'_'+attempt;
    const r=await fetch(target,{cache:'no-store',headers:{Accept:'application/json'}});
-   if(!r.ok)throw Error('TSE respondeu HTTP '+r.status);
+   if(!r.ok){const err=new Error('TSE respondeu HTTP '+r.status+' para '+url);err.status=r.status;throw err;}
    return await r.json();
   }catch(err){
    last=err;
