@@ -34,6 +34,7 @@ function inject(){
  '<div class="campo"><label>Ano da eleição</label><select id="tseLiveAno"><option>Carregando…</option></select></div>'+
  '<div class="campo"><label>Eleição / turno</label><select id="tseLiveEleicao" disabled><option>Carregando…</option></select></div>'+
  '<div class="campo"><label>Estado</label><select id="tseLiveUF">'+UF.map(x=>'<option value="'+x[0].toLowerCase()+'" '+(x[0]==='PA'?'selected':'')+'>'+x[1]+' ('+x[0]+')</option>').join('')+'</select></div>'+
+ '<div class="campo"><label>Pesquisar cidade</label><input id="tseLiveBuscaMunicipio" placeholder="Digite o nome do município" autocomplete="off"></div>'+ 
  '<div class="campo"><label>Município</label><select id="tseLiveMunicipio" disabled><option>Carregando…</option></select></div>'+
  '<div class="campo"><label>Zona eleitoral (opcional)</label><input id="tseLiveZona" inputmode="numeric" placeholder="Ex.: 015"></div>'+
  '<div class="campo"><label>Seção (opcional)</label><input id="tseLiveSecao" inputmode="numeric" placeholder="Ex.: 0209"></div>'+
@@ -45,6 +46,7 @@ function inject(){
  $('tseLiveAno').addEventListener('change',()=>{renderElections();loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveEleicao').addEventListener('change',()=>{loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveUF').addEventListener('change',()=>loadMunicipalities().catch(showError));
+ $('tseLiveBuscaMunicipio').addEventListener('input',filterMunicipalities);
  $('tseLiveConsultar').addEventListener('click',queryResults);
  $('tseLiveCandidato').addEventListener('input',()=>{if(lastResult)renderResult(lastResult)});
  $('tseLiveAbrirTSE').addEventListener('click',()=>window.open('https://resultados.tse.jus.br/oficial/app/index.html','_blank','noopener'));
@@ -83,13 +85,24 @@ async function loadMunicipalities(){
  $('tseLiveMunicipio').disabled=true;$('tseLiveMunicipio').innerHTML='<option>Carregando municípios do TSE…</option>';
  const code=String(e.cd).padStart(6,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
- const data=await getJSON(BASE+'/oficial/'+e.cycle+'/'+electionDir+'/config/mun-'+electionDir+'-cm.json');
+ const data=await getJSON(BASE+'/oficial/'+e.cycle+'/'+e.cd+'/config/mun-'+electionDir+'-cm.json');
  municipalities=(data.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)?.mu||[];
  const opts=municipalities.slice().sort((a,b)=>String(a.nm).localeCompare(String(b.nm),'pt-BR'));
  $('tseLiveMunicipio').innerHTML=opts.map(m=>'<option value="'+esc(String(m.cd).padStart(5,'0'))+'">'+esc(m.nm)+'</option>').join('');
  $('tseLiveMunicipio').disabled=!opts.length;
  const conc=opts.find(m=>norm(m.nm)==='concordia do para');if(conc)$('tseLiveMunicipio').value=String(conc.cd).padStart(5,'0');
  if(!opts.length)$('tseLiveMunicipio').innerHTML='<option value="">Nenhum município listado para esta eleição/UF</option>';
+ $('tseLiveBuscaMunicipio').value='';
+}
+function filterMunicipalities(){
+ const q=norm($('tseLiveBuscaMunicipio')?.value||'');
+ const select=$('tseLiveMunicipio');
+ const filtered=municipalities.filter(m=>!q||norm(m.nm).includes(q));
+ const previous=select.value;
+ select.innerHTML=filtered.map(m=>'<option value="'+esc(String(m.cd).padStart(5,'0'))+'">'+esc(m.nm)+'</option>').join('');
+ if(!filtered.length){select.innerHTML='<option value="">Nenhuma cidade encontrada</option>';select.disabled=true;return;}
+ select.disabled=false;
+ if(filtered.some(m=>String(m.cd).padStart(5,'0')===previous))select.value=previous;
 }
 function loadOffices(){
  const e=selectedElection();if(!e)return;
@@ -103,7 +116,7 @@ function makeResultURL(e,uf,mun,zone,cargo){
  const z=String(zone||'').replace(/\D/g,'');
  const zonePart=z?'-z'+z.padStart(4,'0'):'';
  const electionDir='e'+String(e.cd).padStart(6,'0');
- return BASE+'/oficial/'+e.cycle+'/'+electionDir+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
+ return BASE+'/oficial/'+e.cycle+'/'+e.cd+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
 }
 async function queryResults(){
  const e=selectedElection(),uf=$('tseLiveUF').value,mun=$('tseLiveMunicipio').value,cargo=$('tseLiveCargo').value;
