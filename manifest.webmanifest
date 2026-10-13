@@ -1,15 +1,49 @@
 {
-  "name": "Gabinete Lane Martins",
-  "short_name": "Gabinete Lane Martins",
-  "description": "Sistema oficial de gestão do Gabinete Lane Martins.",
-  "start_url": "./",
+  "name": "Gabinete Lene Martins",
+  "short_name": "Gabinete LM",
+  "description": "Sistema de gestão do Gabinete Lene Martins: cidadãos, atendimentos, demandas e agenda.",
+  "id": "./",
+  "start_url": "./?origem=app",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
   "background_color": "#fff5fa",
   "theme_color": "#e91e63",
+  "lang": "pt-BR",
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "icons": [
-    {"src":"icons/icon-192.svg?v=3001","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
-    {"src":"icons/icon-512.svg?v=3001","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+    {
+      "src": "icons/icon-192.svg?v=3002",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.svg?v=3002",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Abrir gabinete",
+      "short_name": "Gabinete",
+      "url": "./?origem=atalho",
+      "icons": [
+        {
+          "src": "icons/icon-192.svg?v=3002",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
   ]
 }
