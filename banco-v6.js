@@ -9,7 +9,7 @@ const states=['Pará','Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Dis
 const isState=v=>states.some(s=>s.toLowerCase()===String(v||'').trim().toLowerCase());
 const norm=v=>String(v??'').trim().replace(/\s+/g,' ');
 const read=()=>{try{const d=JSON.parse(get.call(localStorage,DB)||'{"people":[],"agenda":[]}');d.people=Array.isArray(d.people)?d.people:[];d.agenda=Array.isArray(d.agenda)?d.agenda:[];return d}catch(e){return{people:[],agenda:[]}}};
-const write=d=>{window.__gabineteCentralWriting=true;try{set.call(localStorage,DB,JSON.stringify(d))}finally{setTimeout(()=>{window.__gabineteCentralWriting=false},0)}};
+const write=d=>{window.__gabineteCentralWriting=true;try{set.call(localStorage,DB,JSON.stringify(d));window.dispatchEvent(new Event('gabinete:dados-atualizados'))}finally{setTimeout(()=>{window.__gabineteCentralWriting=false},0)}};
 function writeIfChanged(d){const next=JSON.stringify(d);if(get.call(localStorage,DB)===next)return false;write(d);return true}
 const cfg=()=>{try{return JSON.parse(get.call(localStorage,CFG)||'null')}catch(e){return null}};
 const session=()=>{try{return JSON.parse(get.call(localStorage,SES)||'null')}catch(e){return null}};
