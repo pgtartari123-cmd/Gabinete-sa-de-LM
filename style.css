@@ -207,3 +207,35 @@ input,select,textarea,.campo input,.campo select,.campo textarea{border-color:#d
   right:-10%!important;
  }
 }
+
+/* Faixa de acabamento roxo cobre o recorte irregular inferior do retrato */
+.hero-trabalho:after{
+ content:""!important;
+ position:absolute!important;
+ display:block!important;
+ z-index:2!important;
+ left:32%!important;
+ right:-12%!important;
+ bottom:-2px!important;
+ width:auto!important;
+ height:112px!important;
+ transform:rotate(-6deg)!important;
+ border-radius:58% 0 0 0!important;
+ background:linear-gradient(155deg,#36204f 0%,#51235e 40%,#762866 72%,#9b2b79 100%)!important;
+ box-shadow:0 -5px 24px rgba(22,25,61,.18)!important;
+ pointer-events:none!important;
+}
+.hero-trabalho:before{
+ z-index:0!important;
+}
+.hero-assinatura{position:relative!important;z-index:3!important}
+@media(max-width:700px){
+ .hero-trabalho:after{
+  left:28%!important;
+  right:-12%!important;
+  height:76px!important;
+  bottom:-2px!important;
+  transform:rotate(-5deg)!important;
+  background:linear-gradient(155deg,#36204f 0%,#51235e 44%,#762866 76%,#9b2b79 100%)!important;
+ }
+}
