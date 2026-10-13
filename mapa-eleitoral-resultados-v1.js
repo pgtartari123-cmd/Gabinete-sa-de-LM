@@ -60,7 +60,7 @@ async function importFile(){
 function render(){
  const table=$('melTseTabela');if(!table)return;
  const all=readLocal(),year=Number($('melTseAno')?.value||0),turn=Number($('melTseTurno')?.value||1),mun=norm($('melTseMunicipio')?.value||''),uf=$('melTseUF')?.value||'PA',type=$('melTseTipo')?.value||'',zone=($('melTseFiltroZona')?.value||'').trim(),section=($('melTseFiltroSecao')?.value||'').trim(),cand=norm($('melTseFiltroCand')?.value||''),office=$('melTseFiltroCargo')?.value||'';
- let base=all.filter(r=>r.ano_eleicao===year&&r.turno===turn&&norm(r.municipio)===mun&&r.uf===uf&&(!type||norm(r.tipo_eleicao).includes(norm(type).split(' ')[1]||norm(type))));
+ let base=all.filter(r=>r.ano_eleicao===year&&r.turno===turn&&norm(r.municipio)===mun&&r.uf===uf);
  const offices=[...new Set(base.map(r=>r.cargo))].sort();const sel=$('melTseFiltroCargo');if(sel){const current=sel.value;if(sel.dataset.options!==offices.join('|')){sel.innerHTML='<option value="">Todos os cargos</option>'+offices.map(o=>'<option>'+esc(o)+'</option>').join('');sel.dataset.options=offices.join('|');if(offices.includes(current))sel.value=current}}
  const filtered=base.filter(r=>(!zone||r.zona.includes(zone))&&(!section||r.secao.includes(section))&&(!office||r.cargo===office)&&(!cand||(norm(r.nome_candidato).includes(cand)||String(r.numero_candidato||'').includes(cand))));
  const people=localData().filter(p=>(!zone||String(p.zonaEleitoral||'').padStart(3,'0').includes(zone))&&(!section||String(p.secaoEleitoral||'').padStart(4,'0').includes(section)));
