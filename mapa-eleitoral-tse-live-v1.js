@@ -150,7 +150,7 @@ function renderResult(state){
 }
 async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
- const pleito=String(e.pleito||'').padStart(6,'0'),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
+ const pleito=String(e.pleito||'').replace(/\D/g,''),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
  const url=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+uf+'/p'+pleito+'-'+uf+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
  const aux=await getJSON(url);
