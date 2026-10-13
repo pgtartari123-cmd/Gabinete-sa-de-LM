@@ -26,8 +26,9 @@ async function getJSON(url){
 }
 function allElections(config){const out=[];(config.pl||[]).forEach(pl=>(pl.e||[]).forEach(e=>out.push({...e,cycle:pl.c,pleito:pl.cd,pleitoDate:pl.dt})));return out}
 function displayElection(e){return e.nm||('Eleição '+e.cd+' — turno '+e.t)}
+function electionYear(e){const m=String(e.pleitoDate||'').match(/(\\d{4})$/);return m?m[1]:String(e.cycle||'').replace(/^ele/,'')}
 function selectedElection(){return elections.find(e=>String(e.cd)===$('tseLiveEleicao')?.value)}
-function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&(/elei[cç][aã]o|eleicao/i.test(x.nm||'')||String(x.cd)===String(e.cd)))}
+function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&((e.sqele&&x.sqele===e.sqele)||String(x.cd)===String(e.cd)))}
 function inject(){
  const section=$('mapaEleitoralGabinete');if(!section||$('tseLivePanel'))return;
  const panel=document.createElement('div');panel.id='tseLivePanel';panel.className='card';panel.style.cssText='padding:16px;margin:14px 0';
@@ -60,7 +61,7 @@ async function boot(){
  setStatus('Conectando aos arquivos oficiais do TSE…');
  const cfg=await getJSON(BASE+'/oficial/comum/config/ele-c.json');
  elections=allElections(cfg).filter(e=>e.cycle&&e.cd&&e.nm);
- const years=[...new Set(elections.map(e=>String(e.cycle).replace('ele','')))].sort((a,b)=>Number(b)-Number(a));
+ const years=[...new Set(elections.map(electionYear))].sort((a,b)=>Number(b)-Number(a));
  $('tseLiveAno').innerHTML=years.map(y=>'<option value="'+esc(y)+'">'+esc(y)+'</option>').join('');
  const defaultYear=years.includes('2026')?'2026':years[0];$('tseLiveAno').value=defaultYear;
  renderElections();await loadMunicipalities();await loadOffices();
@@ -69,7 +70,7 @@ async function boot(){
 }
 function renderElections(){
  const year=$('tseLiveAno').value;
- const list=elections.filter(e=>String(e.cycle).replace(/^ele/,'')===year);
+ const list=elections.filter(e=>electionYear(e)===year);
  // Não restringir o nome a “eleição ordinária”: o TSE pode rotular pleitos recentes como eleição geral ou por cargo.
  $('tseLiveEleicao').innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
  $('tseLiveEleicao').disabled=!list.length;
