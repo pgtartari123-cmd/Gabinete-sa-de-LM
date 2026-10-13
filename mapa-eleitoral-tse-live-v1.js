@@ -129,12 +129,17 @@ async function queryResults(){
  const zone=$('tseLiveZona').value.trim(),section=$('tseLiveSecao').value.trim();
  const btn=$('tseLiveConsultar');btn.disabled=true;setStatus('Consultando resultado oficial no TSE…');$('tseLiveResultado').innerHTML='';
  try{
-  if(section){setStatus('Consultando o boletim de urna da seção '+section+'…');await querySection(resultElection,uf,mun,zone,section,cargo);return}
+  let sectionUnavailable=false;
+  if(section){
+   setStatus('Consultando o boletim de urna da seção '+section+'…');
+   try{await querySection(resultElection,uf,mun,zone,section,cargo);return}
+   catch(sectionError){sectionUnavailable=true;setStatus('O arquivo específico da seção não foi encontrado. Tentando consultar a totalização do município/zona…');}
+  }
   const url=makeResultURL(resultElection,uf,mun,zone,cargo);
   const data=await getJSON(url);lastResult={data,url,e:resultElection,uf,mun,zone,cargo,section:''};renderResult(lastResult);
   const state=data.and==='f'?'Totalização finalizada':data.and==='p'?'Apuração parcial/em andamento':'Resultado oficial disponível';
-  setStatus(state+' • Arquivo atualizado em '+(data.dg||'data não informada')+' às '+(data.hg||'hora não informada')+'.');
- }catch(e){showError(e);$('tseLiveResultado').innerHTML='<p>Não foi possível obter esse arquivo para os filtros selecionados. Confirme se o cargo existe nessa eleição e se há resultado publicado para esse município/zona.</p>'}
+  setStatus((sectionUnavailable?'⚠️ Não foi possível obter o boletim da seção '+section+'; exibindo a totalização do município/zona. ':'')+state+' • Arquivo atualizado em '+(data.dg||'data não informada')+' às '+(data.hg||'hora não informada')+'.');
+ }catch(e){showError(e);$('tseLiveResultado').innerHTML='<p>Não foi possível obter esse arquivo para os filtros selecionados. Confira se o cargo existe nesse pleito e se há resultado publicado. Para anos históricos, os arquivos precisam ser importados do Portal de Dados Abertos do TSE, pois não seguem todos o mesmo formato da consulta ao vivo.</p>'}
  finally{btn.disabled=false}
 }
 function renderResult(state){
