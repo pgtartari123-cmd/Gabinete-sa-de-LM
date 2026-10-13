@@ -66,7 +66,12 @@ async function boot(){
 }
 function renderElections(){
  const year=$('tseLiveAno').value;
- const list=elections.filter(e=>String(e.cycle).replace('ele','')===year);
+ const list=elections.filter(e=>{
+  if(String(e.cycle).replace('ele','')!==year)return false;
+  const name=norm(e.nm||'');
+  if(year==='2026')return /eleicao ordinaria/.test(name)&&(/federal/.test(name)||/estadual/.test(name)||/municipal/.test(name));
+  return /eleicao ordinaria/.test(name);
+ });
  $('tseLiveEleicao').innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
  $('tseLiveEleicao').disabled=!list.length;
  const preferred=list.find(e=>String(e.t)==='1'&&/estadual|municipal|federal/i.test(e.nm))||list[0];
