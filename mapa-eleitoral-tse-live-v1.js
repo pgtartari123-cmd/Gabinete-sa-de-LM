@@ -105,7 +105,7 @@ function loadOffices(){
  const e=selectedElection();if(!e)return;
  const uf=$('tseLiveUF').value, related=relatedElections(e), options=[];
  related.forEach(ev=>{
-  const abr=(ev.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)||(ev.abr||[]).find(a=>String(a.cd).toLowerCase()==='br')||(ev.abr||[])[0];
+  const abr=(ev.abr||[]).find(a=>String(a.cd).toUpperCase()===uf)||(ev.abr||[]).find(a=>String(a.cd).toLowerCase()==='br')||(ev.abr||[])[0];
   (abr?.cp||[]).forEach(cp=>{const key=String(cp.cd)+'|'+String(ev.cd);if(!options.some(o=>o.key===key))options.push({key,ds:cp.ds,ev});});
  });
  const order={'Presidente':1,'Governador':2,'Senador':3,'Deputado Federal':4,'Deputado Estadual':5,'Deputado Distrital':6,'Prefeito':7,'Vereador':8};
