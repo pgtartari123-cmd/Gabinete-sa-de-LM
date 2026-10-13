@@ -34,7 +34,7 @@ function inject(){
  panel.innerHTML='<h3>🔴 Consulta integrada ao TSE</h3><p>Consulta os arquivos oficiais publicados pelo Tribunal Superior Eleitoral. Escolha a eleição e o local, depois pesquise pelo cargo ou candidato. Os dados são carregados do TSE, não de uma planilha manual.</p><p style="font-size:13px">🔎 <strong>Eleições históricas:</strong> para anos anteriores que não aparecem na consulta ao vivo, use a aba de importação de resultados por CSV e obtenha os arquivos no <a href="https://dadosabertos.tse.jus.br/dataset/?groups=resultados" target="_blank" rel="noopener">Portal de Dados Abertos do TSE</a> ou consulte o <a href="https://www.tse.jus.br/eleicoes/resultados-eleicoes" target="_blank" rel="noopener">arquivo oficial de resultados eleitorais</a>. Alguns anos antigos têm dados incompletos.</p><div class="form-grid">'+
  '<div class="campo"><label>Ano da eleição</label><select id="tseLiveAno"><option>Carregando…</option></select></div>'+
  '<div class="campo"><label>Eleição / turno</label><select id="tseLiveEleicao" disabled><option>Carregando…</option></select></div>'+
- '<div class="campo"><label>Estado</label><select id="tseLiveUF">'+UF.map(x=>'<option value="'+x[0].toLowerCase()+'" '+(x[0]==='PA'?'selected':'')+'>'+x[1]+' ('+x[0]+')</option>').join('')+'</select></div>'+
+ '<div class="campo"><label>Estado</label><select id="tseLiveUF">'+UF.map(x=>'<option value="'+x[0]+'" '+(x[0]==='PA'?'selected':'')+'>'+x[1]+' ('+x[0]+')</option>').join('')+'</select></div>'+
  '<div class="campo"><label>Pesquisar cidade</label><input id="tseLiveBuscaMunicipio" placeholder="Digite o nome do município" autocomplete="off"></div>'+ 
  '<div class="campo"><label>Município</label><select id="tseLiveMunicipio" disabled><option>Carregando…</option></select></div>'+
  '<div class="campo"><label>Zona eleitoral (opcional)</label><input id="tseLiveZona" inputmode="numeric" placeholder="Ex.: 015"></div>'+
@@ -83,7 +83,7 @@ async function loadMunicipalities(){
  const code=String(e.cd).padStart(6,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
  const data=await getJSON(BASE+'/oficial/'+e.cycle+'/'+e.cd+'/config/mun-'+electionDir+'-cm.json');
- municipalities=(data.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)?.mu||[];
+ municipalities=(data.abr||[]).find(a=>String(a.cd).toUpperCase()===uf)?.mu||[];
  const opts=municipalities.slice().sort((a,b)=>String(a.nm).localeCompare(String(b.nm),'pt-BR'));
  $('tseLiveMunicipio').innerHTML=opts.map(m=>'<option value="'+esc(String(m.cd).padStart(5,'0'))+'">'+esc(m.nm)+'</option>').join('');
  $('tseLiveMunicipio').disabled=!opts.length;
