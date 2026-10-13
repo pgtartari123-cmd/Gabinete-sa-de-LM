@@ -21,7 +21,7 @@ function normalizeRow(o,meta){
  const votes=Number(String(pick(o,['QT_VOTOS','votos'])||'0').replace(/\./g,'').replace(',','.'));
  if(!year||!municipality||!zone||!section||!office||!candidate||!Number.isFinite(votes))return null;
  const uf=pick(o,['SG_UF','uf'])||meta.uf||'PA',code=pick(o,['CD_MUNICIPIO','codigo_municipio']);
- const typ=pick(o,['NM_TIPO_ELEICAO','tipo_eleicao'])||meta.tipo|| (year%2===0?'Eleições gerais/municipais':'Eleição');
+ const typ=meta.tipo||pick(o,['NM_TIPO_ELEICAO','tipo_eleicao'])||'Outra eleição';
  const key=[year,turn,uf,code,municipality,zone,section,office,number,candidate].join('|');
  return{id:hash(key),ano_eleicao:year,tipo_eleicao:typ,turno:turn,uf,codigo_municipio:code||null,municipio,zona:zone,secao:section,cargo:office,numero_candidato:number||null,nome_candidato:candidate,votos:Math.max(0,Math.round(votes)),origem:'TSE'};
 }
@@ -38,7 +38,7 @@ function readLocal(){try{return JSON.parse(localStorage.getItem(LOCAL)||'[]')}ca
 function saveLocal(rows){localStorage.setItem(LOCAL,JSON.stringify(rows))}
 async function loadResults(){
  const status=$('melTseStatus');if(status)status.textContent='Carregando resultados eleitorais salvos…';
- try{const remote=await api('resultados_eleitorais?select=*&order=ano_eleicao.desc&limit=50000');const map=new Map();[...readLocal(),...(remote||[])].forEach(r=>map.set(r.id,r));saveLocal([...map.values()]);if(status)status.textContent='Resultados carregados: '+map.size+' registro(s).';render()}
+ try{const remote=[];for(let offset=0;offset<100000;offset+=1000){const page=await api('resultados_eleitorais?select=*&order=ano_eleicao.desc&limit=1000',{headers:{'Range-Unit':'items','Range':offset+'-'+(offset+999)}});remote.push(...(page||[]));if(!page||page.length<1000)break}const map=new Map();[...readLocal(),...remote].forEach(r=>map.set(r.id,r));saveLocal([...map.values()]);if(status)status.textContent='Resultados carregados: '+map.size+' registro(s).';render()}
  catch(e){if(status)status.textContent='Não foi possível consultar o banco agora. '+e.message+' Os dados já importados neste aparelho continuam guardados.';render()}
 }
 async function importFile(){
