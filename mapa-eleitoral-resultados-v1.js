@@ -85,11 +85,9 @@ function render(){
  const uniquePeople=new Set(people.map(p=>String(p.id||p.cpf||p.nome||'')).filter(Boolean)).size;
  const sections=new Map();
  byOffice.filter(r=>(!selectedLocal[1]||(String(r.codigo_local_votacao||'')===selectedLocal[0]&&r.local_votacao===selectedLocal.slice(1).join('|')))&&(!zone||r.zona.includes(zone))&&(!section||r.secao.includes(section))).forEach(r=>sections.set(r.zona+'|'+r.secao,{zona:r.zona,secao:r.secao}));
- /*(r=>(!zone||r.zona.includes(zone))&&(!section||r.secao.includes(section))).forEach(r=>sections.set(r.zona+'|'+r.secao,{zona:r.zona,secao:r.secao}));
- */
  people.forEach(p=>{const z=String(p.zonaEleitoral||'').replace(/\D/g,'').padStart(3,'0'),s=String(p.secaoEleitoral||'').replace(/\D/g,'').padStart(4,'0');if(z&&s&&z!=='000'&&s!=='0000')sections.set(z+'|'+s,{zona:z,secao:s})});
  const keyOf=r=>String(r.zona).padStart(3,'0')+'|'+String(r.secao).padStart(4,'0');
- const sectionCount=(z,s)=>new Set(localData().filter(p=>String(p.zonaEleitoral||'').replace(/\D/g,'').padStart(3,'0')===z&&String(p.secaoEleitoral||'').replace(/\D/g,'').padStart(4,'0')===s).map(p=>String(p.id||p.cpf||p.nome||'')).filter(Boolean)).size;
+ const sectionCount=(z,s)=>new Set(localData().filter(p=>(!selectedLocal[1]||norm(p.localVotacao||p.localEleitoral||'')===norm(selectedLocal.slice(1).join('|')))&&String(p.zonaEleitoral||'').replace(/\D/g,'').padStart(3,'0')===z&&String(p.secaoEleitoral||'').replace(/\D/g,'').padStart(4,'0')===s).map(p=>String(p.id||p.cpf||p.nome||'')).filter(Boolean)).size;
  const fmt=n=>Number(n||0).toLocaleString('pt-BR');
  $('melTseResumo').innerHTML='<div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr))"><div class="card"><small>Linhas oficiais no filtro</small><h3>'+fmt(filtered.length)+'</h3></div><div class="card"><small>Cadastros únicos nas seções filtradas</small><h3>'+fmt(uniquePeople)+'</h3></div><div class="card"><small>Votos somados nas linhas visíveis</small><h3>'+fmt(filtered.reduce((n,r)=>n+r.votos,0))+'</h3></div><div class="card"><small>Seções no cruzamento</small><h3>'+fmt(sections.size)+'</h3></div></div><p style="font-size:12px;color:#666">Comparação agregada por zona/seção. Cadastros não identificam o voto individual. Se uma seção não tiver linha no arquivo oficial importado, o sistema não presume zero votos.</p>';
  if(!filtered.length&&!sections.size){table.innerHTML='<div class="card vazio">Nenhum resultado para esses filtros. Importe o CSV oficial do TSE ou ajuste eleição, turno, município, zona e seção.</div>';return}
