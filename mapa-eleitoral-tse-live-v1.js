@@ -163,8 +163,8 @@ async function querySection(e,uf,mun,zone,section,cargo){
  if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
  const file=files[files.length-1];
  const fileURL=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+uf+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
- throw Error('O boletim da seção foi localizado, mas o formato técnico do arquivo ainda não é decodificado por este módulo. Usando a totalização oficial do município/zona.');
- $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo desta urna, mas ele usa o formato técnico do Boletim de Urna. Para não exibir números incorretos, este módulo ainda não interpreta esse arquivo por candidato.</p><p><a href="https://resultados.tse.jus.br/oficial/app/index.html" target="_blank" rel="noopener">Abrir consulta oficial do TSE</a> · <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir arquivo de urna</a></p></div>';
+ $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna oficial localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo do BU. O arquivo usa codificação técnica ASN.1/BER e este módulo ainda não consegue decodificar os votos automaticamente; por isso, não vou substituir o resultado da seção por números agregados da zona.</p><p><a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir / baixar arquivo BU oficial</a> · <a href="https://www.tse.jus.br/eleicoes/eleicoes-2022/documentacao-tecnica-do-software-da-urna-eletronica" target="_blank" rel="noopener">Documentação técnica do TSE</a></p></div>';
+ setStatus('Boletim oficial localizado. A leitura automática dos votos do arquivo BU ainda requer o decodificador técnico do TSE.');
 }
 document.addEventListener('DOMContentLoaded',()=>{inject();setInterval(inject,1000)});
 })();
