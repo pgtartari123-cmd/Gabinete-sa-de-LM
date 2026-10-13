@@ -27,7 +27,7 @@ async function getJSON(url){
 function allElections(config){const out=[];(config.pl||[]).forEach(pl=>(pl.e||[]).forEach(e=>out.push({...e,cycle:pl.c,pleito:pl.cd,pleitoDate:pl.dt})));return out}
 function displayElection(e){return e.nm||('Eleição '+e.cd+' — turno '+e.t)}
 function selectedElection(){return elections.find(e=>String(e.cd)===$('tseLiveEleicao')?.value)}
-function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&/eleicao ordinaria/i.test(x.nm||''))}
+function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&(/elei[cç][aã]o|eleicao/i.test(x.nm||'')||String(x.cd)===String(e.cd)))}
 function inject(){
  const section=$('mapaEleitoralGabinete');if(!section||$('tseLivePanel'))return;
  const panel=document.createElement('div');panel.id='tseLivePanel';panel.className='card';panel.style.cssText='padding:16px;margin:14px 0';
@@ -69,12 +69,8 @@ async function boot(){
 }
 function renderElections(){
  const year=$('tseLiveAno').value;
- const list=elections.filter(e=>{
-  if(String(e.cycle).replace('ele','')!==year)return false;
-  const name=norm(e.nm||'');
-  if(year==='2026')return /eleicao ordinaria/.test(name)&&(/federal/.test(name)||/estadual/.test(name)||/municipal/.test(name));
-  return /eleicao ordinaria/.test(name);
- });
+ const list=elections.filter(e=>String(e.cycle).replace(/^ele/,'')===year);
+ // Não restringir o nome a “eleição ordinária”: o TSE pode rotular pleitos recentes como eleição geral ou por cargo.
  $('tseLiveEleicao').innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
  $('tseLiveEleicao').disabled=!list.length;
  const preferred=list.find(e=>String(e.t)==='1'&&/eleicao ordinaria estadual/i.test(e.nm))||list.find(e=>String(e.t)==='1'&&/eleicao ordinaria municipal/i.test(e.nm))||list[0];
@@ -129,17 +125,16 @@ async function queryResults(){
  const zone=$('tseLiveZona').value.trim(),section=$('tseLiveSecao').value.trim();
  const btn=$('tseLiveConsultar');btn.disabled=true;setStatus('Consultando resultado oficial no TSE…');$('tseLiveResultado').innerHTML='';
  try{
-  let sectionUnavailable=false;
   if(section){
    setStatus('Consultando o boletim de urna da seção '+section+'…');
-   try{await querySection(resultElection,uf,mun,zone,section,cargo);return}
-   catch(sectionError){sectionUnavailable=true;setStatus('Não foi possível obter uma leitura confiável do boletim desta seção. Tentando consultar a totalização oficial do município/zona…');}
+   await querySection(resultElection,uf,mun,zone,section,cargo);
+   return;
   }
   const url=makeResultURL(resultElection,uf,mun,zone,cargo);
   const data=await getJSON(url);lastResult={data,url,e:resultElection,uf,mun,zone,cargo,section:''};renderResult(lastResult);
   const state=data.and==='f'?'Totalização finalizada':data.and==='p'?'Apuração parcial/em andamento':'Resultado oficial disponível';
-  setStatus((sectionUnavailable?'⚠️ Não foi possível obter o boletim da seção '+section+'; exibindo a totalização do município/zona. ':'')+state+' • Arquivo atualizado em '+(data.dg||'data não informada')+' às '+(data.hg||'hora não informada')+'.');
- }catch(e){showError(e);$('tseLiveResultado').innerHTML='<p>Não foi possível obter esse arquivo para os filtros selecionados. Confira se o cargo existe nesse pleito e se há resultado publicado. Para anos históricos, os arquivos precisam ser importados do Portal de Dados Abertos do TSE, pois não seguem todos o mesmo formato da consulta ao vivo.</p>'}
+  setStatus(state+' • Arquivo atualizado em '+(data.dg||'data não informada')+' às '+(data.hg||'hora não informada')+'.');
+ }catch(e){showError(e);$('tseLiveResultado').innerHTML='<p>Não foi possível concluir a pesquisa com essa combinação de filtros. Confira ano, eleição/turno, estado, município e cargo. Se informou seção, confirme também a zona eleitoral. Em anos ou pleitos ainda não publicados pelo TSE, o arquivo pode não existir; tente novamente mais tarde ou use a importação oficial por CSV.</p><p><a href="https://resultados.tse.jus.br/oficial/app/index.html" target="_blank" rel="noopener">Conferir no portal oficial do TSE</a></p>'}
  finally{btn.disabled=false}
 }
 function renderResult(state){
