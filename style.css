@@ -39,3 +39,7 @@ input,select,textarea,.campo input,.campo select,.campo textarea{border-color:#d
 :focus-visible{outline:3px solid rgba(232,62,145,.42);outline-offset:2px}
 @media(max-width:700px){.menu button.menu-ativo:after{left:12px;right:12px}.tab{animation:none}}
 @media(prefers-reduced-motion:reduce){.tab{animation:none!important}#painelConteudo>.card,#listaPessoas>.card,#listaDemandas>.card,#listaAgenda>.card,#listaAniversarios>.card{transition:none!important}}
+
+/* Banner do painel: sempre visível no início da tela */
+#painel>.hero-trabalho{display:flex!important;margin:0 0 25px!important}
+#painel>.titulo-aba{margin-top:0}
