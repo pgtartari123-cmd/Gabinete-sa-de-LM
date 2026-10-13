@@ -9,7 +9,21 @@ const norm=v=>String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const UF=[['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']];
 let elections=[],municipalities=[],lastResult=null;
-async function getJSON(url){const r=await fetch(url,{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw Error('TSE respondeu HTTP '+r.status+' ao consultar '+url);return r.json()}
+async function getJSON(url){
+ let last;
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const target=url+(url.includes('?')?'&':'?')+'_gabinete_t='+Date.now()+'_'+attempt;
+   const r=await fetch(target,{cache:'no-store',headers:{Accept:'application/json'}});
+   if(!r.ok)throw Error('TSE respondeu HTTP '+r.status);
+   return await r.json();
+  }catch(err){
+   last=err;
+   if(attempt<2)await new Promise(resolve=>setTimeout(resolve,1200*(attempt+1)));
+  }
+ }
+ throw Error((last?.message||'Falha na consulta')+' após 3 tentativas. O servidor público do TSE pode estar temporariamente indisponível. Tente novamente em alguns minutos.');
+}
 function allElections(config){const out=[];(config.pl||[]).forEach(pl=>(pl.e||[]).forEach(e=>out.push({...e,cycle:pl.c,pleito:pl.cd,pleitoDate:pl.dt})));return out}
 function displayElection(e){return e.nm||('Eleição '+e.cd+' — turno '+e.t)}
 function selectedElection(){return elections.find(e=>String(e.cd)===$('tseLiveEleicao')?.value)}
@@ -28,7 +42,7 @@ function inject(){
  '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button type="button" id="tseLiveConsultar">🔎 Consultar votos oficiais</button><button type="button" id="tseLiveAbrirTSE" class="btn-secundario">Abrir portal oficial do TSE ↗</button></div>'+
  '<div id="tseLiveStatus" aria-live="polite" style="padding:8px 0"></div><div id="tseLiveResultado"></div><p style="font-size:12px;color:#666">Fonte: resultados.tse.jus.br. A consulta por município/zona usa a totalização oficial. A seção eleitoral é um nível diferente: quando informada, o sistema vai consultar o boletim de urna da seção se o arquivo oficial estiver disponível; não confunde votos da zona com votos de uma seção.</p>';
  section.insertBefore(panel,section.firstChild);
- $('tseLiveAno').addEventListener('change',renderElections);
+ $('tseLiveAno').addEventListener('change',()=>{renderElections();loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveEleicao').addEventListener('change',()=>{loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveUF').addEventListener('change',()=>loadMunicipalities().catch(showError));
  $('tseLiveConsultar').addEventListener('click',queryResults);
@@ -57,7 +71,6 @@ function renderElections(){
  $('tseLiveEleicao').disabled=!list.length;
  const preferred=list.find(e=>String(e.t)==='1'&&/estadual|municipal|federal/i.test(e.nm))||list[0];
  if(preferred)$('tseLiveEleicao').value=String(preferred.cd);
- loadMunicipalities().then(loadOffices).catch(showError);
 }
 async function loadMunicipalities(){
  const e=selectedElection();if(!e)return;
