@@ -93,7 +93,7 @@ function render(){
   const z=String(s.zona).padStart(3,'0'),sec=String(s.secao).padStart(4,'0'),cnt=sectionCount(z,sec);
   const sectionRows=filtered.filter(r=>keyOf(r)===z+'|'+sec);
   if(sectionRows.length){sectionRows.forEach(r=>rows.push('<tr><td>'+esc(z)+'</td><td>'+esc(sec)+'</td><td>'+esc(r.cargo)+'</td><td>'+esc(r.numero_candidato||'—')+'</td><td>'+esc(r.nome_candidato)+'</td><td><strong>'+fmt(r.votos)+'</strong></td><td>'+fmt(cnt)+'</td></tr>'))}
-  else if(selectedCandidate[1]) rows.push('<tr><td>'+esc(z)+'</td><td>'+esc(sec)+'</td><td>'+esc(office||'—')+'</td><td>'+esc(selectedCandidate[0]||'—')+'</td><td>'+esc(selectedCandidate.slice(1).join('|'))+'</td><td>Sem linha oficial</td><td>'+fmt(cnt)+'</td></tr>');
+  else rows.push('<tr><td>'+esc(z)+'</td><td>'+esc(sec)+'</td><td>'+esc(office||'—')+'</td><td>'+esc(selectedCandidate[0]||'—')+'</td><td>'+esc(selectedCandidate[1]?selectedCandidate.slice(1).join('|'):'Sem candidato selecionado')+'</td><td>Sem linha oficial na base importada</td><td>'+fmt(cnt)+'</td></tr>');
  });
  table.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Zona</th><th>Seção</th><th>Cargo</th><th>Nº</th><th>Candidato</th><th>Votos oficiais</th><th>Cadastros na seção</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
