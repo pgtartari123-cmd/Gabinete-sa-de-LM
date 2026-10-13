@@ -55,14 +55,14 @@ async function importFile(){
   let uploaded=0;for(let i=0;i<normalized.length;i+=250){await api('resultados_eleitorais?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(normalized.slice(i,i+250))});uploaded+=Math.min(250,normalized.length-i)}
   $('melTseStatus').textContent='Importação concluída: '+uploaded+' linhas sincronizadas. Fonte: CSV oficial do TSE. Locais de votação identificados no arquivo: '+new Set(normalized.map(r=>r.local_votacao).filter(Boolean)).size+'. '+all.length+' registros mantidos neste aparelho.';
   render();
- }catch(e){$('melTseStatus').textContent='Importação não concluída: '+e.message+' Nenhum cadastro de cidadão foi alterado. Os resultados locais anteriores foram preservados.'}
+ }catch(e){$('melTseStatus').textContent='Importação não concluída: '+e.message+' Nenhum cadastro de cidadão foi alterado. Os resultados importados podem continuar salvos neste aparelho; confira a conexão antes de repetir a sincronização.'}
  finally{btn.disabled=false}
 }
 function printReport(){
  const table=$('melTseTabela');if(!table||!table.innerHTML.trim()){alert('Gere primeiro um relatório com resultados.');return}
  const title='Mapa eleitoral por local de votação';
  const meta='Município: '+($('melTseMunicipio')?.value||'')+' / '+($('melTseUF')?.value||'')+' • Eleição: '+($('melTseTipo')?.value||'')+' • Ano: '+($('melTseAno')?.value||'')+' • Turno: '+($('melTseTurno')?.value||'');
- const w=window.open('','_blank','noopener');
+ const w=window.open('','_blank');
  if(!w){alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.');return}
  w.document.open();w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font:12px Arial,sans-serif;color:#111;padding:20px}h1{font-size:20px}p{margin:6px 0 16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}small{color:#444}.nota{margin-top:16px;font-size:10px}@page{size:landscape;margin:12mm}</style></head><body><h1>'+esc(title)+'</h1><p>'+esc(meta)+'</p>'+table.innerHTML+'<p class="nota">Resultados eleitorais: dados importados do arquivo oficial do TSE. Cadastros são contagens agregadas por zona/seção e não comprovam o voto de nenhuma pessoa.</p><script>window.onload=function(){window.focus();window.print()}<\/script></body></html>');w.document.close();
 }
