@@ -117,7 +117,8 @@ function makeResultURL(e,uf,mun,zone,cargo){
  const z=String(zone||'').replace(/\D/g,'');
  const zonePart=z?'-z'+z.padStart(4,'0'):'';
  const electionDir='e'+String(e.cd).padStart(6,'0');
- return BASE+'/oficial/'+e.cycle+'/'+e.cd+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
+ const state=String(uf||'').toLowerCase();
+ return BASE+'/oficial/'+e.cycle+'/'+e.cd+'/dados/'+state+'/'+state+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
 }
 async function queryResults(){
  const e=selectedElection(),uf=$('tseLiveUF').value,mun=$('tseLiveMunicipio').value,cargoSelection=$('tseLiveCargo').value.split('|'),cargo=cargoSelection[0],resultElection=elections.find(x=>String(x.cd)===cargoSelection[1])||e;
@@ -152,12 +153,13 @@ async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
  const pleito=String(e.pleito||'').replace(/\D/g,''),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
- const url=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+uf+'/p'+pleito+'-'+uf+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
+ const state=String(uf||'').toLowerCase();
+ const url=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+state+'/p'+pleito+'-'+state+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
  const aux=await getJSON(url);
  const files=(aux.hashes||[]).flatMap(h=>h.arq||[]).filter(a=>String(a.tp||'').toLowerCase().includes('bu')||String(a.nm||'').toLowerCase().includes('bu'));
  if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
  const file=files[files.length-1];
- const fileURL=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+uf+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
+ const fileURL=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+state+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
  $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna oficial localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo do BU. O arquivo usa codificação técnica ASN.1/BER e este módulo ainda não consegue decodificar os votos automaticamente; por isso, não vou substituir o resultado da seção por números agregados da zona.</p><p><a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir / baixar arquivo BU oficial</a> · <a href="https://www.tse.jus.br/eleicoes/eleicoes-2022/documentacao-tecnica-do-software-da-urna-eletronica" target="_blank" rel="noopener">Documentação técnica do TSE</a></p></div>';
  setStatus('Boletim oficial localizado. A leitura automática dos votos do arquivo BU ainda requer o decodificador técnico do TSE.');
 }
