@@ -19,11 +19,11 @@ const formAgenda=$('#formAgenda');if(formAgenda)formAgenda.addEventListener('sub
 function getBirthdays(){return db.people.map(p=>({person:p,date:birth(p)})).filter(x=>x.date).sort((a,b)=>a.date-b.date)}function renderBirthdays(){const c=$('#listaAniversarios');if(!c)return;const b=getBirthdays();c.innerHTML=b.map(x=>`<div class="card"><h3>🎂 ${esc(x.person.nome)}</h3><p>Aniversário: ${x.date.toLocaleDateString('pt-BR')}</p>${x.person.telefone?`<button type="button" onclick="wa('${esc(x.person.telefone)}','Parabéns, ${esc(x.person.nome)}! 🎉 Desejamos muita saúde, felicidade e um excelente novo ciclo!')">Enviar felicitações pelo WhatsApp</button>`:''}</div>`).join('')||'<div class="card vazio"><h3>Nenhum aniversário cadastrado</h3><p>Cadastre a data de nascimento dos cidadãos para aparecerem aqui.</p></div>'}
 $('#buscaPessoa')?.addEventListener('input',render);$('#filtroBairro')?.addEventListener('input',render);['buscaDemanda','filtroTipoDemanda','filtroStatusDemanda','filtroBairroDemanda'].forEach(id=>document.getElementById(id)?.addEventListener('input',renderDemandas));['filtroTipoDemanda','filtroStatusDemanda'].forEach(id=>document.getElementById(id)?.addEventListener('change',renderDemandas));window.imprimirPessoas=()=>window.print();document.addEventListener('DOMContentLoaded',()=>{render();renderDemandas();renderAgenda();renderBirthdays();atualizarPainel();mostrarAba('painel')});window.render=render;window.renderDemandas=renderDemandas;window.renderAgenda=renderAgenda;window.renderBirthdays=renderBirthdays;window.getBirthdays=getBirthdays;
 
-// Sincronização visual: mantém o estado em memória alinhado ao localStorage atualizado pelo banco-v6.
+// Atualiza a interface apenas quando os dados realmente mudam; sem polling de 1 segundo que redesenhava a tela inteira.
 let __gabineteUiLastRaw=localStorage.getItem(KEY)||'';
-setInterval(()=>{
+function __gabineteAtualizarDaStorage(raw){
   try{
-    const raw=localStorage.getItem(KEY)||'';
+    raw=typeof raw==='string'?raw:(localStorage.getItem(KEY)||'');
     if(!raw||raw===__gabineteUiLastRaw)return;
     const fresh=JSON.parse(raw);
     if(!fresh||typeof fresh!=='object')return;
@@ -33,4 +33,7 @@ setInterval(()=>{
     db.agenda=Array.isArray(db.agenda)?db.agenda:[];
     render();renderDemandas();renderAgenda();renderBirthdays();atualizarPainel();
   }catch(e){console.warn('Sincronização visual do Gabinete:',e)}
-},1000);
+}
+window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)__gabineteAtualizarDaStorage(e.newValue)});
+window.addEventListener('gabinete: dados-atualizados',()=>__gabineteAtualizarDaStorage());
+window.addEventListener('gabinete:dados-atualizados',()=>__gabineteAtualizarDaStorage());
