@@ -81,7 +81,8 @@ function render(){
  if(candidateSelect){const old=candidateSelect.value;const sig=candidateOptions.map(x=>x.number+'|'+x.name).join('~');if(candidateSelect.dataset.options!==sig){candidateSelect.innerHTML='<option value="">Todos os candidatos</option>'+candidateOptions.map(x=>'<option value="'+esc(x.number+'|'+x.name)+'">'+esc((x.number?x.number+' — ':'')+x.name)+'</option>').join('');candidateSelect.dataset.options=sig;if(candidateOptions.some(x=>x.number+'|'+x.name===old))candidateSelect.value=old}}
  const selectedCandidate=(candidateSelect?.value||chosen).split('|');
  let filtered=byOffice.filter(r=>(!selectedLocal[1]||(String(r.codigo_local_votacao||'')===selectedLocal[0]&&r.local_votacao===selectedLocal.slice(1).join('|')))&&(!zone||r.zona.includes(zone))&&(!section||r.secao.includes(section))&&(!cand||(norm(r.nome_candidato).includes(cand)||String(r.numero_candidato||'').includes(cand)))&&(!selectedCandidate[1]||(String(r.numero_candidato||'')===selectedCandidate[0]&&r.nome_candidato===selectedCandidate.slice(1).join('|'))));
- const matchesLocal=p=>!selectedLocal[1]||(selectedLocal[0]&&String(p.codigoLocalVotacao||'')?String(p.codigoLocalVotacao)===selectedLocal[0]:norm(p.localVotacao||p.localEleitoral||'')===norm(selectedLocal.slice(1).join('|')));\n const people=localData().filter(p=>matchesLocal(p)&&(!zone||String(p.zonaEleitoral||'').replace(/\D/g,'').padStart(3,'0').includes(zone.replace(/\D/g,'')))&&(!section||String(p.secaoEleitoral||'').replace(/\D/g,'').padStart(4,'0').includes(section.replace(/\D/g,''))));
+ const matchesLocal=p=>!selectedLocal[1]||(selectedLocal[0]&&String(p.codigoLocalVotacao||'')?String(p.codigoLocalVotacao)===selectedLocal[0]:norm(p.localVotacao||p.localEleitoral||'')===norm(selectedLocal.slice(1).join('|')));
+ const people=localData().filter(p=>matchesLocal(p)&&(!zone||String(p.zonaEleitoral||'').replace(/\D/g,'').padStart(3,'0').includes(zone.replace(/\D/g,'')))&&(!section||String(p.secaoEleitoral||'').replace(/\D/g,'').padStart(4,'0').includes(section.replace(/\D/g,''))));
  const uniquePeople=new Set(people.map(p=>String(p.id||p.cpf||p.nome||'')).filter(Boolean)).size;
  const selectedVoteTotal=filtered.reduce((n,r)=>n+Number(r.votos||0),0);
  const sectionsWithOfficialVotes=new Set(filtered.map(r=>r.zona+'|'+r.secao)).size;
@@ -103,5 +104,6 @@ function render(){
  });
  table.innerHTML='<h4>Local: '+esc(selectedLocal[1]?selectedLocal.slice(1).join('|'):'Todos os locais')+'</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Zona</th><th>Seção</th><th>Cargo</th><th>Nº</th><th>Candidato</th><th>Votos oficiais</th><th>Cadastros na seção</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
-function boot(){inject();window.addEventListener('gabinete:dados-atualizados',render);window.addEventListener('gabinete-sync-status',render);}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+function boot(){inject();window.addEventListener('gabinete:dados-atualizados',render);window.addEventListener('gabinete-sync-status',render);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
