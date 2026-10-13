@@ -20,13 +20,5 @@
   }).catch(function(err){console.warn('[PWA] Não foi possível registrar o aplicativo:',err);});
  });
 })();
-</script><script>
-(function(){
- if(!('serviceWorker' in navigator)) return;
- navigator.serviceWorker.register('./sw.js?v=74',{scope:'./',updateViaCache:'none'})
- .then(function(reg){ if(reg.update) reg.update().catch(function(){}); })
- .catch(function(){});
-})();
-</script>
-<!-- gabinete-forcar-atualizacao-v74 -->
+</script><!-- Registro único do Service Worker: sw.js?v=75 -->
 </body></html>
