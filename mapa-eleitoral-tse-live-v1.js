@@ -107,23 +107,20 @@ function renderResult(state){
  (cargo.agr||[]).forEach(a=>(a.par||[]).forEach(p=>(p.cand||[]).forEach(c=>candidates.push({n:c.n,nm:c.nm||c.nmu||'',party:p.sg||'',votes:Number(c.vap||0),pct:c.pvap}))));
  (cargo.cand||[]).forEach(c=>candidates.push({n:c.n,nm:c.nm||c.nmu||'',party:'',votes:Number(c.vap||0),pct:c.pvap}));
  const unique=new Map();candidates.forEach(c=>unique.set(String(c.n)+'|'+norm(c.nm),c));candidates=[...unique.values()].filter(c=>!q||norm(c.nm).includes(q)||String(c.n).includes(q)||norm(c.party).includes(q)).sort((a,b)=>b.votes-a.votes);
- const st=d.s||{},meta='<div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Votos válidos</small><h3>'+Number(st.tv||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Comparecimento</small><h3>'+Number(st.st||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Abstenções</small><h3>'+Number(st.snt||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Seções totalizadas</small><h3>'+Number(st.st||0).toLocaleString('pt-BR')+'</h3></div></div>';
+ const se=d.s||{},el=d.e||{},vo=d.v||{},meta='<div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Votos computados</small><h3>'+Number(vo.tv||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Comparecimento</small><h3>'+Number(el.c||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Abstenções</small><h3>'+Number(el.a||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Seções totalizadas / total</small><h3>'+Number(se.st||0).toLocaleString('pt-BR')+' / '+Number(se.ts||0).toLocaleString('pt-BR')+'</h3></div></div>';
  $('tseLiveResultado').innerHTML=meta+'<h4>Votação por candidato</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px">Nº</th><th style="text-align:left;padding:8px">Candidato</th><th style="text-align:left;padding:8px">Partido</th><th style="text-align:right;padding:8px">Votos</th><th style="text-align:right;padding:8px">%</th></tr></thead><tbody>'+candidates.map(c=>'<tr><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.n)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.nm)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.party||'—')+'</td><td style="padding:8px;text-align:right;border-top:1px solid #ddd"><strong>'+c.votes.toLocaleString('pt-BR')+'</strong></td><td style="padding:8px;text-align:right;border-top:1px solid #ddd">'+(Number.isFinite(Number(c.pct))?Number(c.pct).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%':'—')+'</td></tr>').join('')+'</tbody></table></div><p style="font-size:12px;color:#666">Arquivo consultado: <a href="'+esc(state.url)+'" target="_blank" rel="noopener">abrir JSON oficial do TSE</a></p>';
 }
 async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
- // EA18 points to the official ballot-box files for the exact polling section.
  const pleito=String(e.pleito||'').padStart(6,'0'),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
  const url=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+uf+'/p'+pleito+'-'+uf+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
  const aux=await getJSON(url);
  const files=(aux.hashes||[]).flatMap(h=>h.arq||[]).filter(a=>String(a.tp||'').toLowerCase().includes('bu')||String(a.nm||'').toLowerCase().includes('bu'));
- if(!files.length)throw Error('O TSE ainda não disponibilizou um boletim de urna acessível para essa seção, ou o formato do arquivo exige tratamento específico.');
+ if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
  const file=files[files.length-1];
  const fileURL=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+uf+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
- const bu=await getJSON(fileURL);
- lastResult={data:bu,url:fileURL,e,uf,mun,zone:z,cargo,section:ss};
- renderResult(lastResult);
- setStatus('Boletim de urna consultado no TSE • Zona '+z+' • Seção '+ss+'.');
+ setStatus('O TSE disponibilizou o arquivo oficial do boletim desta seção. A votação por seção está em formato técnico BU/ASN.1 e não pode ser interpretada como JSON comum. A consulta por município/zona já está integrada; a leitura direta do BU precisa de um decodificador específico. Arquivo localizado: '+file.nm);
+ $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo desta urna, mas ele usa o formato técnico do Boletim de Urna. Para não exibir números incorretos, este módulo ainda não interpreta esse arquivo por candidato.</p><p><a href="https://resultados.tse.jus.br/oficial/app/index.html" target="_blank" rel="noopener">Abrir consulta oficial do TSE</a> · <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir arquivo de urna</a></p></div>';
 }
 document.addEventListener('DOMContentLoaded',()=>{inject();setInterval(inject,1000)});
 })();
