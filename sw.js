@@ -1,4 +1,4 @@
-const CACHE_NAME='gabinete-lm-shell-v79';
+const CACHE_NAME='gabinete-lm-shell-v80';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest?v=3010','./style.css?v=2013'];
 self.addEventListener('message',event=>{if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting()))});
