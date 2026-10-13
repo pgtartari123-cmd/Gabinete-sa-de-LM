@@ -78,7 +78,7 @@ async function loadMunicipalities(){
  $('tseLiveMunicipio').disabled=true;$('tseLiveMunicipio').innerHTML='<option>Carregando municípios do TSE…</option>';
  const code=String(e.cd).padStart(6,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
- const data=await getJSON(BASE+'/'+e.cycle+'/'+electionDir+'/config/mun-'+electionDir+'-cm.json');
+ const data=await getJSON(BASE+'/oficial/'+e.cycle+'/'+electionDir+'/config/mun-'+electionDir+'-cm.json');
  municipalities=(data.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)?.mu||[];
  const opts=municipalities.slice().sort((a,b)=>String(a.nm).localeCompare(String(b.nm),'pt-BR'));
  $('tseLiveMunicipio').innerHTML=opts.map(m=>'<option value="'+esc(String(m.cd).padStart(5,'0'))+'">'+esc(m.nm)+'</option>').join('');
@@ -98,7 +98,7 @@ function makeResultURL(e,uf,mun,zone,cargo){
  const z=String(zone||'').replace(/\D/g,'');
  const zonePart=z?'-z'+z.padStart(4,'0'):'';
  const electionDir='e'+String(e.cd).padStart(6,'0');
- return BASE+'/'+e.cycle+'/'+electionDir+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
+ return BASE+'/oficial/'+e.cycle+'/'+electionDir+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
 }
 async function queryResults(){
  const e=selectedElection(),uf=$('tseLiveUF').value,mun=$('tseLiveMunicipio').value,cargo=$('tseLiveCargo').value;
@@ -129,7 +129,7 @@ async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
  const pleito=String(e.pleito||'').padStart(6,'0'),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
  const electionDir='e'+String(e.cd).padStart(6,'0');
- const url=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+uf+'/p'+pleito+'-'+uf+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
+ const url=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+uf+'/p'+pleito+'-'+uf+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
  const aux=await getJSON(url);
  const files=(aux.hashes||[]).flatMap(h=>h.arq||[]).filter(a=>String(a.tp||'').toLowerCase().includes('bu')||String(a.nm||'').toLowerCase().includes('bu'));
  if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
