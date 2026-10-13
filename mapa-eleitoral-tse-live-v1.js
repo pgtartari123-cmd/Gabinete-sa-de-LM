@@ -26,7 +26,7 @@ async function getJSON(url){
 }
 function allElections(config){const out=[];(config.pl||[]).forEach(pl=>(pl.e||[]).forEach(e=>out.push({...e,cycle:pl.c,pleito:pl.cd,pleitoDate:pl.dt})));return out}
 function displayElection(e){return e.nm||('Eleição '+e.cd+' — turno '+e.t)}
-function electionYear(e){const m=String(e.pleitoDate||'').match(/(\\d{4})$/);return m?m[1]:String(e.cycle||'').replace(/^ele/,'')}
+function electionYear(e){const m=String(e.pleitoDate||'').match(/(\d{4})$/);return m?m[1]:String(e.cycle||'').replace(/^ele/,'')}
 function selectedElection(){return elections.find(e=>String(e.cd)===$('tseLiveEleicao')?.value)}
 function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&((e.sqele&&x.sqele===e.sqele)||String(x.cd)===String(e.cd)))}
 function inject(){
