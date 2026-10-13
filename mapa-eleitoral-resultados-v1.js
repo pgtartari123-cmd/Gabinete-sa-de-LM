@@ -103,5 +103,5 @@ function render(){
  });
  table.innerHTML='<h4>Local: '+esc(selectedLocal[1]?selectedLocal.slice(1).join('|'):'Todos os locais')+'</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Zona</th><th>Seção</th><th>Cargo</th><th>Nº</th><th>Candidato</th><th>Votos oficiais</th><th>Cadastros na seção</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
 }
-function boot(){inject();document.addEventListener('gabinete:dados-atualizados',render);document.addEventListener('gabinete-sync-status',render);}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+function boot(){inject();window.addEventListener('gabinete:dados-atualizados',render);window.addEventListener('gabinete-sync-status',render);}\nif(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
