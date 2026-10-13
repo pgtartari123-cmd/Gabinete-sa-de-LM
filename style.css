@@ -239,3 +239,118 @@ input,select,textarea,.campo input,.campo select,.campo textarea{border-color:#d
   background:linear-gradient(155deg,#36204f 0%,#51235e 44%,#762866 76%,#9b2b79 100%)!important;
  }
 }
+
+/* Identidade visual consistente nas telas internas: Pessoas, Demandas, Agenda e Lixeira */
+:root{
+ --primary:#e83e91;
+ --primary-dark:#c82c7a;
+ --background:#f4f6fb;
+ --card:#ffffff;
+ --text:#17233f;
+ --muted:#66718a;
+ --border:#e3e8f2;
+ --success:#16865b;
+ --warning:#c77a12;
+}
+body{background:var(--background);color:var(--text)}
+.topo{
+ background:linear-gradient(135deg,#111c37 0%,#172749 76%,#2d1d49 100%)!important;
+ color:#fff!important;
+ border-bottom:1px solid rgba(255,255,255,.12)!important;
+ box-shadow:0 8px 26px rgba(15,25,50,.12)!important;
+}
+.marca p{color:#c6cee0!important}
+.online{background:rgba(22,134,91,.18)!important;color:#a6f0c8!important;border:1px solid rgba(166,240,200,.18)}
+.menu button,.acoes-topo button{
+ border:1px solid rgba(255,255,255,.12)!important;
+ background:rgba(255,255,255,.10)!important;
+ color:#eef2ff!important;
+ border-radius:13px!important;
+}
+.menu button:hover,.acoes-topo button:hover{background:rgba(255,255,255,.17)!important}
+.menu button.menu-ativo{
+ background:linear-gradient(135deg,#ed4197,#c82c7a)!important;
+ border-color:transparent!important;
+ color:#fff!important;
+ box-shadow:0 5px 18px rgba(232,62,145,.25)!important;
+}
+main{padding-top:30px}
+.tab h2{color:#17233f;letter-spacing:-.7px}
+.eyebrow{color:#c93683}
+.card,form{
+ background:#fff!important;
+ border:1px solid #e2e7f1!important;
+ border-radius:18px!important;
+ box-shadow:0 7px 22px rgba(22,35,63,.055)!important;
+}
+.card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.card:hover{border-color:#edc0d9!important;box-shadow:0 12px 28px rgba(22,35,63,.09)!important}
+.card h3{color:#192642}
+.card p{color:#64708a}
+.destaque{border-left:4px solid #e83e91!important}
+input,select,textarea{
+ border:1px solid #d9e0ed!important;
+ border-radius:11px!important;
+ background:#fff!important;
+ color:#17233f!important;
+ min-height:43px;
+}
+input:focus,select:focus,textarea:focus{
+ border-color:#e83e91!important;
+ box-shadow:0 0 0 3px rgba(232,62,145,.12)!important;
+ outline:none!important;
+}
+button{
+ transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+button:focus-visible{outline:3px solid rgba(232,62,145,.38)!important;outline-offset:2px}
+.acoes button,.form-acoes button,.form-agenda>button,.titulo-aba>.btn-secundario,.ficha-acoes button{
+ background:linear-gradient(135deg,#e83e91,#c82c7a)!important;
+ color:#fff!important;
+ border:0!important;
+ border-radius:11px!important;
+ box-shadow:0 4px 12px rgba(232,62,145,.14);
+}
+.acoes button:hover,.form-acoes button:hover,.form-agenda>button:hover,.titulo-aba>.btn-secundario:hover,.ficha-acoes button:hover{
+ background:linear-gradient(135deg,#d93384,#b92570)!important;
+ box-shadow:0 7px 17px rgba(232,62,145,.22);
+}
+.btn-secundario,.btn-cancelar{
+ background:#fce7f3!important;
+ color:#86265a!important;
+ border:1px solid #f5c5de!important;
+}
+.filtros{gap:12px}
+.filtros input,.filtros select{box-shadow:0 3px 10px rgba(22,35,63,.025)}
+#listaPessoas,#listaDemandas,#listaAgenda,#listaAniversarios,#listaLixeira{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:14px;
+ align-items:stretch;
+}
+#listaPessoas>.card,#listaDemandas>.card,#listaAgenda>.card,#listaAniversarios>.card,#listaLixeira>.card{
+ margin:0!important;
+ min-width:0;
+}
+#pessoas .titulo-aba,#demandas .titulo-aba,#agenda .titulo-aba,#lixeira .titulo-aba{
+ padding:4px 0 16px;
+ border-bottom:1px solid #e3e8f2;
+}
+#agenda form{margin-bottom:18px}
+#lixeira .titulo-aba p{color:#66718a;margin:4px 0 0}
+@media(max-width:760px){
+ main{padding:22px 14px 60px}
+ .topo{padding:16px 14px!important}
+ .marca h1{font-size:25px!important}
+ .tab h2{font-size:27px!important}
+ .titulo-aba{align-items:flex-start!important;flex-direction:column!important;gap:10px!important}
+ .acoes-topo{width:100%}
+ .filtros,.filtros-demandas{grid-template-columns:1fr!important}
+ #listaPessoas,#listaDemandas,#listaAgenda,#listaAniversarios,#listaLixeira{grid-template-columns:minmax(0,1fr)}
+ form{padding:17px!important}
+ .form-grid{grid-template-columns:1fr!important}
+ .campo-grande{grid-column:auto!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .card,button{transition:none!important}
+}
