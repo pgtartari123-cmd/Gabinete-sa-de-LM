@@ -1,6 +1,6 @@
-const CACHE_NAME='gabinete-lm-shell-v55';
-const APP_SHELL=['./','./index.html','./manifest.webmanifest?v=3008','./style.css?v=2002'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting()))});
+const CACHE_NAME='gabinete-lm-shell-v56';
+const APP_SHELL=['./','./index.html','./manifest.webmanifest?v=3010','./style.css?v=2002'];
+self.addEventListener('message',event=>{if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting()});\nself.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;
 const isApp=/\/app\.js$/i.test(url.pathname),isBanco=/\/banco-v6\.js$/i.test(url.pathname),isAniv=/\/aniversarios-fix-v1\.js$/i.test(url.pathname),isImp=/\/controle-pastas-impressao-v1\.js$/i.test(url.pathname),isNewFeature=/\/(?:melhorias-completas-v1|mapa-eleitoral-resultados-v1|mapa-eleitoral-tse-live-v1)\.js$/i.test(url.pathname)||/\/index\.html$/i.test(url.pathname);
