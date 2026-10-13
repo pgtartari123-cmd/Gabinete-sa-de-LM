@@ -94,3 +94,41 @@ input,select,textarea,.campo input,.campo select,.campo textarea{border-color:#d
  transform:rotate(-5deg)!important;
  background:linear-gradient(180deg,rgba(232,62,145,0) 0%,rgba(232,62,145,.72) 48%,rgba(36,25,64,.98) 100%)!important;
 }
+
+/* Banner seguindo a referência aprovada */
+.hero-trabalho{
+ min-height:340px!important;
+ background-size:auto 108%,cover,cover!important;
+ background-position:right bottom,center,center!important;
+}
+.hero-texto{max-width:57%!important;align-self:center}
+.hero-trabalho h3{
+ max-width:95%!important;
+ white-space:normal!important;
+ font-size:clamp(34px,4.6vw,58px)!important;
+ line-height:.98!important;
+ letter-spacing:-1.5px!important;
+}
+.hero-trabalho h3 em{display:block;color:#f23696;margin-top:4px}
+.hero-trabalho p{max-width:95%!important;font-size:clamp(14px,1.6vw,19px)!important}
+.hero-trabalho:after{
+ z-index:1!important;
+ height:145px!important;
+ bottom:-8px!important;
+ right:-7%!important;
+ width:78%!important;
+ transform:rotate(-8deg)!important;
+ background:linear-gradient(165deg,#ef3293 0%,#d62b8b 52%,#61235e 100%)!important;
+ border-radius:55% 0 0 0!important;
+}
+.hero-trabalho:before{z-index:0!important}
+.hero-texto,.hero-assinatura{z-index:3!important;position:relative}
+@media(max-width:700px){
+ .hero-trabalho{min-height:300px!important;background-size:auto 88%,cover,cover!important;background-position:right bottom,center,center!important;padding:24px 20px!important}
+ .hero-texto{max-width:64%!important}
+ .hero-trabalho h3{font-size:clamp(26px,6.5vw,38px)!important;line-height:1.02!important;letter-spacing:-1px!important}
+ .hero-trabalho h3 em{margin-top:3px}
+ .hero-trabalho p{font-size:12px!important;max-width:100%!important;line-height:1.4!important}
+ .hero-trabalho button{font-size:12px!important;padding:10px 12px!important}
+ .hero-trabalho:after{height:105px!important;bottom:-12px!important;width:82%!important;right:-9%!important}
+}
