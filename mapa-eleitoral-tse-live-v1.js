@@ -133,7 +133,7 @@ async function queryResults(){
   if(section){
    setStatus('Consultando o boletim de urna da seção '+section+'…');
    try{await querySection(resultElection,uf,mun,zone,section,cargo);return}
-   catch(sectionError){sectionUnavailable=true;setStatus('O arquivo específico da seção não foi encontrado. Tentando consultar a totalização do município/zona…');}
+   catch(sectionError){sectionUnavailable=true;setStatus('Não foi possível obter uma leitura confiável do boletim desta seção. Tentando consultar a totalização oficial do município/zona…');}
   }
   const url=makeResultURL(resultElection,uf,mun,zone,cargo);
   const data=await getJSON(url);lastResult={data,url,e:resultElection,uf,mun,zone,cargo,section:''};renderResult(lastResult);
@@ -163,7 +163,7 @@ async function querySection(e,uf,mun,zone,section,cargo){
  if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
  const file=files[files.length-1];
  const fileURL=BASE+'/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+uf+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
- setStatus('O TSE disponibilizou o arquivo oficial do boletim desta seção. A votação por seção está em formato técnico BU/ASN.1 e não pode ser interpretada como JSON comum. A consulta por município/zona já está integrada; a leitura direta do BU precisa de um decodificador específico. Arquivo localizado: '+file.nm);
+ throw Error('O boletim da seção foi localizado, mas o formato técnico do arquivo ainda não é decodificado por este módulo. Usando a totalização oficial do município/zona.');
  $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo desta urna, mas ele usa o formato técnico do Boletim de Urna. Para não exibir números incorretos, este módulo ainda não interpreta esse arquivo por candidato.</p><p><a href="https://resultados.tse.jus.br/oficial/app/index.html" target="_blank" rel="noopener">Abrir consulta oficial do TSE</a> · <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir arquivo de urna</a></p></div>';
 }
 document.addEventListener('DOMContentLoaded',()=>{inject();setInterval(inject,1000)});
