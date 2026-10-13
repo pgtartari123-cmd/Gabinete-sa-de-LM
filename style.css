@@ -60,3 +60,37 @@ input,select,textarea,.campo input,.campo select,.campo textarea{border-color:#d
  .hero-trabalho p{max-width:235px;font-size:13px!important}
  .hero-trabalho button{padding:10px 12px;font-size:13px}
 }
+
+/* Refinamento final do banner: retrato maior, texto sem colisão e base limpa */
+.hero-trabalho{
+ min-height:280px!important;
+ background-size:auto 105%,cover,cover!important;
+ background-position:right bottom,center,center!important;
+}
+.hero-texto{max-width:61%!important;z-index:4}
+.hero-trabalho h3{
+ font-size:clamp(30px,4.2vw,48px)!important;
+ letter-spacing:-1.2px!important;
+ white-space:normal;
+ text-wrap:balance;
+}
+.hero-trabalho p{max-width:92%!important;position:relative;z-index:4}
+.hero-trabalho button{position:relative;z-index:5}
+@media(min-width:701px){
+ .hero-trabalho h3{white-space:nowrap;font-size:clamp(30px,3.7vw,46px)!important}
+}
+@media(max-width:700px){
+ .hero-trabalho{min-height:260px!important;background-size:auto 88%,cover,cover!important;background-position:right bottom,center,center!important}
+ .hero-texto{max-width:63%!important}
+ .hero-trabalho h3{font-size:clamp(25px,6.1vw,33px)!important;letter-spacing:-.9px!important}
+ .hero-trabalho p{max-width:100%!important;font-size:12px!important}
+}
+/* Cobre apenas a faixa inferior irregular do recorte da foto, sem alterar dados */
+.hero-trabalho:after{
+ height:72px!important;
+ bottom:-26px!important;
+ right:-8%!important;
+ width:75%!important;
+ transform:rotate(-5deg)!important;
+ background:linear-gradient(180deg,rgba(232,62,145,0) 0%,rgba(232,62,145,.72) 48%,rgba(36,25,64,.98) 100%)!important;
+}
