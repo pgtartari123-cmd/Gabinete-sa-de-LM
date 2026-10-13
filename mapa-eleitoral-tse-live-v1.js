@@ -27,6 +27,7 @@ async function getJSON(url){
 function allElections(config){const out=[];(config.pl||[]).forEach(pl=>(pl.e||[]).forEach(e=>out.push({...e,cycle:pl.c,pleito:pl.cd,pleitoDate:pl.dt})));return out}
 function displayElection(e){return e.nm||('Eleição '+e.cd+' — turno '+e.t)}
 function selectedElection(){return elections.find(e=>String(e.cd)===$('tseLiveEleicao')?.value)}
+function relatedElections(e){return elections.filter(x=>x.cycle===e.cycle&&String(x.t)===String(e.t)&&/eleicao ordinaria/i.test(x.nm||''))}
 function inject(){
  const section=$('mapaEleitoralGabinete');if(!section||$('tseLivePanel'))return;
  const panel=document.createElement('div');panel.id='tseLivePanel';panel.className='card';panel.style.cssText='padding:16px;margin:14px 0';
@@ -76,7 +77,7 @@ function renderElections(){
  });
  $('tseLiveEleicao').innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
  $('tseLiveEleicao').disabled=!list.length;
- const preferred=list.find(e=>String(e.t)==='1'&&/estadual|municipal|federal/i.test(e.nm))||list[0];
+ const preferred=list.find(e=>String(e.t)==='1'&&/eleicao ordinaria estadual/i.test(e.nm))||list.find(e=>String(e.t)==='1'&&/eleicao ordinaria municipal/i.test(e.nm))||list[0];
  if(preferred)$('tseLiveEleicao').value=String(preferred.cd);
 }
 async function loadMunicipalities(){
@@ -106,11 +107,15 @@ function filterMunicipalities(){
 }
 function loadOffices(){
  const e=selectedElection();if(!e)return;
- const uf=$('tseLiveUF').value;
- const abr=(e.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)||(e.abr||[]).find(a=>String(a.cd).toLowerCase()==='br')||(e.abr||[])[0];
- const cargos=abr?.cp||[];
- $('tseLiveCargo').innerHTML=cargos.map(c=>'<option value="'+esc(c.cd)+'">'+esc(c.ds)+'</option>').join('');
- $('tseLiveCargo').disabled=!cargos.length;
+ const uf=$('tseLiveUF').value, related=relatedElections(e), options=[];
+ related.forEach(ev=>{
+  const abr=(ev.abr||[]).find(a=>String(a.cd).toLowerCase()===uf)||(ev.abr||[]).find(a=>String(a.cd).toLowerCase()==='br')||(ev.abr||[])[0];
+  (abr?.cp||[]).forEach(cp=>{const key=String(cp.cd)+'|'+String(ev.cd);if(!options.some(o=>o.key===key))options.push({key,ds:cp.ds,ev});});
+ });
+ const order={'Presidente':1,'Governador':2,'Senador':3,'Deputado Federal':4,'Deputado Estadual':5,'Deputado Distrital':6,'Prefeito':7,'Vereador':8};
+ options.sort((a,b)=>(order[a.ds]||99)-(order[b.ds]||99));
+ $('tseLiveCargo').innerHTML=options.map(o=>'<option value="'+esc(o.key)+'">'+esc(o.ds)+' — '+esc(o.ev.nm||'eleição')+'</option>').join('');
+ $('tseLiveCargo').disabled=!options.length;
 }
 function makeResultURL(e,uf,mun,zone,cargo){
  const z=String(zone||'').replace(/\D/g,'');
@@ -119,14 +124,14 @@ function makeResultURL(e,uf,mun,zone,cargo){
  return BASE+'/oficial/'+e.cycle+'/'+e.cd+'/dados/'+uf+'/'+uf+String(mun).padStart(5,'0')+zonePart+'-c'+String(cargo).padStart(4,'0')+'-'+electionDir+'-u.json';
 }
 async function queryResults(){
- const e=selectedElection(),uf=$('tseLiveUF').value,mun=$('tseLiveMunicipio').value,cargo=$('tseLiveCargo').value;
+ const e=selectedElection(),uf=$('tseLiveUF').value,mun=$('tseLiveMunicipio').value,cargoSelection=$('tseLiveCargo').value.split('|'),cargo=cargoSelection[0],resultElection=elections.find(x=>String(x.cd)===cargoSelection[1])||e;
  if(!e||!mun||!cargo){setStatus('Selecione eleição, estado, município e cargo.');return}
  const zone=$('tseLiveZona').value.trim(),section=$('tseLiveSecao').value.trim();
  const btn=$('tseLiveConsultar');btn.disabled=true;setStatus('Consultando resultado oficial no TSE…');$('tseLiveResultado').innerHTML='';
  try{
-  if(section){setStatus('Consultando o boletim de urna da seção '+section+'…');await querySection(e,uf,mun,zone,section,cargo);return}
-  const url=makeResultURL(e,uf,mun,zone,cargo);
-  const data=await getJSON(url);lastResult={data,url,e,uf,mun,zone,cargo,section:''};renderResult(lastResult);
+  if(section){setStatus('Consultando o boletim de urna da seção '+section+'…');await querySection(resultElection,uf,mun,zone,section,cargo);return}
+  const url=makeResultURL(resultElection,uf,mun,zone,cargo);
+  const data=await getJSON(url);lastResult={data,url,e:resultElection,uf,mun,zone,cargo,section:''};renderResult(lastResult);
   const state=data.and==='f'?'Totalização finalizada':data.and==='p'?'Apuração parcial/em andamento':'Resultado oficial disponível';
   setStatus(state+' • Arquivo atualizado em '+(data.dg||'data não informada')+' às '+(data.hg||'hora não informada')+'.');
  }catch(e){showError(e);$('tseLiveResultado').innerHTML='<p>Não foi possível obter esse arquivo para os filtros selecionados. Confirme se o cargo existe nessa eleição e se há resultado publicado para esse município/zona.</p>'}
