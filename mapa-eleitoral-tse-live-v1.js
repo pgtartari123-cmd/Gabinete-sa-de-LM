@@ -150,19 +150,129 @@ function renderResult(state){
  const se=d.s||{},el=d.e||{},vo=d.v||{},meta='<div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Votos computados</small><h3>'+Number(vo.tv||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Comparecimento</small><h3>'+Number(el.c||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Abstenções</small><h3>'+Number(el.a||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Seções totalizadas / total</small><h3>'+Number(se.st||0).toLocaleString('pt-BR')+' / '+Number(se.ts||0).toLocaleString('pt-BR')+'</h3></div></div>';
  $('tseLiveResultado').innerHTML=meta+'<h4>Votação por candidato</h4><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px">Nº</th><th style="text-align:left;padding:8px">Candidato</th><th style="text-align:left;padding:8px">Partido</th><th style="text-align:right;padding:8px">Votos</th><th style="text-align:right;padding:8px">%</th></tr></thead><tbody>'+candidates.map(c=>'<tr><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.n)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.nm)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(c.party||'—')+'</td><td style="padding:8px;text-align:right;border-top:1px solid #ddd"><strong>'+c.votes.toLocaleString('pt-BR')+'</strong></td><td style="padding:8px;text-align:right;border-top:1px solid #ddd">'+(Number.isFinite(Number(c.pct))?Number(c.pct).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%':'—')+'</td></tr>').join('')+'</tbody></table></div><p style="font-size:12px;color:#666">Arquivo consultado: <a href="'+esc(state.url)+'" target="_blank" rel="noopener">abrir JSON oficial do TSE</a></p>';
 }
+function berNode(bytes,pos){
+ const start=pos; if(pos>=bytes.length)throw Error('Arquivo BU truncado.');
+ const first=bytes[pos++];let tagNo=first&31;
+ if(tagNo===31){tagNo=0;let b;do{if(pos>=bytes.length)throw Error('Tag ASN.1 incompleta.');b=bytes[pos++];tagNo=(tagNo*128)+(b&127)}while(b&128)}
+ if(pos>=bytes.length)throw Error('Comprimento ASN.1 ausente.');
+ let len=bytes[pos++],indefinite=len===128;
+ if(len&128&&!indefinite){const n=len&127;if(n>6||pos+n>bytes.length)throw Error('Comprimento ASN.1 inválido.');len=0;for(let i=0;i<n;i++)len=len*256+bytes[pos++]}
+ const valueStart=pos,constructed=!!(first&32),children=[];
+ if(indefinite){
+  if(!constructed)throw Error('Campo ASN.1 indefinido não é construído.');
+  while(pos+1<bytes.length&&!(bytes[pos]===0&&bytes[pos+1]===0)){const n=berNode(bytes,pos);children.push(n.node);pos=n.next}
+  if(pos+1>=bytes.length)throw Error('Final ASN.1 indefinido ausente.');
+  const valueEnd=pos;pos+=2;
+  return {node:{tag:first,tagNo,tagClass:first>>6,constructed,start,valueStart,valueEnd,end:pos,raw:bytes.slice(valueStart,valueEnd),children},next:pos};
+ }
+ const valueEnd=pos+len;if(valueEnd>bytes.length)throw Error('Conteúdo ASN.1 truncado.');
+ if(constructed){while(pos<valueEnd){const n=berNode(bytes,pos);if(n.next<=pos||n.next>valueEnd)throw Error('Estrutura ASN.1 inválida.');children.push(n.node);pos=n.next}}
+ else pos=valueEnd;
+ return {node:{tag:first,tagNo,tagClass:first>>6,constructed,start,valueStart,valueEnd,end:valueEnd,raw:bytes.slice(valueStart,valueEnd),children},next:valueEnd};
+}
+function berChildren(bytes){const out=[];let p=0;while(p<bytes.length){const n=berNode(bytes,p);out.push(n.node);if(n.next<=p)throw Error('Não foi possível avançar no arquivo ASN.1.');p=n.next}return out}
+function asnInt(n){if(!n||!n.raw||!n.raw.length)return null;let v=0;for(const b of n.raw)v=v*256+b;if(n.raw[0]&128)v-=Math.pow(256,n.raw.length*8);return Number.isSafeInteger(v)?v:null}
+function firstInt(n){if(!n)return null;const direct=asnInt(n);if(direct!==null)return direct;for(const c of n.children||[]){const v=firstInt(c);if(v!==null)return v}return null}
+function asnText(n){if(!n)return '';try{return new TextDecoder('utf-8').decode(n.raw||new Uint8Array()).replace(/\0+$/,'')}catch(e){return ''}}
+function unwrapEnvelope(bytes){
+ const roots=berChildren(bytes);let root=roots.find(n=>n.tagNo===16&&n.constructed)||roots[0];
+ if(!root)throw Error('O arquivo não contém uma estrutura ASN.1 válida.');
+ // BU publicados pelo TSE vêm envelopados: o conteúdo interno fica em OCTET STRING.
+ const octets=(root.children||[]).find(n=>n.tagClass===0&&n.tagNo===4);
+ if(octets&&octets.raw&&octets.raw.length&&octets.raw[0]===48){
+  try{return berChildren(octets.raw).find(n=>n.tagNo===16&&n.constructed)||berChildren(octets.raw)[0]}catch(e){}
+ }
+ return root;
+}
+function sequenceItems(n){return n&&Array.isArray(n.children)?n.children:[]}
+function identifyCandidateMeta(data,cargo){
+ const out={candidate:new Map(),party:new Map()};
+ const c=(data?.carg||[]).find(x=>String(x.cd)===String(cargo))||(data?.carg||[])[0];
+ if(!c)return out;
+ (c.agr||[]).forEach(p=>{
+  const party=String(p.sg||'');
+  if(p.n!=null)out.party.set(String(p.n),party);
+  (p.cand||[]).forEach(x=>out.candidate.set(String(x.n),{name:x.nm||x.nmu||'',party:party||'',pct:x.pvap}));
+ });
+ (c.cand||[]).forEach(x=>out.candidate.set(String(x.n),{name:x.nm||x.nmu||'',party:'',pct:x.pvap}));
+ return out;
+}
+function decodeBuSection(bytes,expected){
+ const root=unwrapEnvelope(bytes),nodes=sequenceItems(root);
+ // Valida município/zona/seção pelo identificador interno do próprio BU antes de exibir votos.
+ const ident=nodes.find(n=>n.tagNo===16&&n.constructed&&sequenceItems(n).length>=3&&sequenceItems(sequenceItems(n)[0]).length>=2);
+ let sectionInfo=null;
+ if(ident){
+  const a=sequenceItems(ident),mz=sequenceItems(a[0]);
+  sectionInfo={municipality:firstInt(mz[0]),zone:firstInt(mz[1]),local:firstInt(a[1]),section:firstInt(a[2])};
+ }
+ if(!sectionInfo)throw Error('Não consegui validar município, zona e seção dentro do BU. Nenhum voto foi exibido.');
+ if(String(sectionInfo.municipality)!==String(Number(expected.municipality))||String(sectionInfo.zone)!==String(Number(expected.zone))||String(sectionInfo.section)!==String(Number(expected.section))){
+  throw Error('O BU retornado não corresponde ao município/zona/seção selecionados. Nenhum voto foi exibido.');
+ }
+ // A eleição é identificada pelo código interno TSE. Não confunde pleito com código da eleição.
+ const electionNodes=[];
+ function walk(n){if(!n)return;if(n.tagNo===16&&n.constructed){const c=sequenceItems(n);if(c.length>=4&&firstInt(c[0])===Number(expected.election)&&sequenceItems(c[3]).length)electionNodes.push(n)}sequenceItems(n).forEach(walk)}
+ walk(root);
+ const electionNode=electionNodes[0];
+ if(!electionNode)throw Error('O BU foi validado, mas não contém a eleição selecionada. Confirme eleição/turno.');
+ const ec=sequenceItems(electionNode), aptos=firstInt(ec[1]);
+ const results=sequenceItems(ec[3]), cargoResults=[];
+ results.forEach(r=>{
+  const rc=sequenceItems(r);if(rc.length<3)return;
+  const totalNodes=sequenceItems(rc[2]);
+  totalNodes.forEach(tc=>{
+   const t=sequenceItems(tc);if(t.length<3)return;
+   const cargoCode=firstInt(t[0]);if(String(cargoCode)!==String(expected.cargo))return;
+   sequenceItems(t[2]).forEach(v=>{
+    const vv=sequenceItems(v);if(vv.length<2)return;
+    const type=firstInt(vv[0]),votes=firstInt(vv[1]);if(votes===null)return;
+    const id=vv.find(x=>x.tagNo===3&&x.constructed),idc=sequenceItems(id);
+    cargoResults.push({type,votes,party:idc.length?firstInt(idc[0]):null,number:idc.length>1?firstInt(idc[1]):null});
+   });
+  });
+ });
+ if(!cargoResults.length)throw Error('A estrutura do BU foi lida, mas não encontrei votos para o cargo selecionado. Para evitar números incorretos, não exibi resultado.');
+ const total=cargoResults.reduce((a,v)=>a+v.votes,0);
+ return {sectionInfo,aptos,rows:cargoResults,total};
+}
 async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
- const pleito=String(e.pleito||'').replace(/\D/g,''),m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
- const electionDir='e'+String(e.cd).padStart(6,'0');
+ const pleito=String(e.pleito||'').replace(/\D/g,'');if(!pleito)throw Error('O TSE não informou o código do pleito para esta eleição.');
+ const m=String(mun).padStart(5,'0'),zz=z.padStart(4,'0'),ss=String(section).replace(/\D/g,'').padStart(4,'0');
  const state=String(uf||'').toLowerCase();
- const url=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+state+'/p'+pleito+'-'+state+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
- const aux=await getJSON(url);
- const files=(aux.hashes||[]).flatMap(h=>h.arq||[]).filter(a=>String(a.tp||'').toLowerCase().includes('bu')||String(a.nm||'').toLowerCase().includes('bu'));
- if(!files.length)throw Error('O TSE não disponibilizou um boletim de urna para essa seção, ou a seção ainda não foi totalizada.');
- const file=files[files.length-1];
- const fileURL=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+state+'/'+m+'/'+zz+'/'+ss+'/'+file.nm;
- $('tseLiveResultado').innerHTML='<div class="card"><h4>Boletim de urna oficial localizado</h4><p>Zona '+esc(z)+' • Seção '+esc(ss)+'</p><p>O TSE publicou o arquivo do BU. O arquivo usa codificação técnica ASN.1/BER e este módulo ainda não consegue decodificar os votos automaticamente; por isso, não vou substituir o resultado da seção por números agregados da zona.</p><p><a href="'+esc(fileURL)+'" target="_blank" rel="noopener">Abrir / baixar arquivo BU oficial</a> · <a href="https://www.tse.jus.br/eleicoes/eleicoes-2022/documentacao-tecnica-do-software-da-urna-eletronica" target="_blank" rel="noopener">Documentação técnica do TSE</a></p></div>';
- setStatus('Boletim oficial localizado. A leitura automática dos votos do arquivo BU ainda requer o decodificador técnico do TSE.');
+ const auxURL=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/config/'+state+'/p'+pleito.padStart(6,'0')+'-'+state+'-m'+m+'-z'+zz+'-s'+ss+'-aux.json';
+ const aux=await getJSON(auxURL);
+ const hashes=Array.isArray(aux.hashes)?aux.hashes:[];
+ const usable=hashes.filter(h=>Array.isArray(h.arq)&&!/(exclu|cancel|substitu|rejeitad)/i.test(String(h.st||'')));
+ const chosen=usable.find(h=>/totalizad/i.test(String(h.st||'')))||usable[usable.length-1];
+ if(!chosen)throw Error('O TSE não publicou um BU utilizável para esta seção. Pode ser seção agregada, não instalada ou ainda não totalizada.');
+ const file=(chosen.arq||[]).filter(a=>/^(bu|busa)$/i.test(String(a.tp||''))||/-bu(?:sa)?\.dat$/i.test(String(a.nm||''))).slice(-1)[0];
+ if(!file)throw Error('O inventário oficial da seção não contém arquivo BU. Nenhum resultado foi estimado.');
+ // O arquivo fica dentro da pasta do hash da urna; omitir esse nível gera HTTP 404.
+ const fileURL=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+state+'/'+m+'/'+zz+'/'+ss+'/'+encodeURIComponent(chosen.hash)+'/'+encodeURIComponent(file.nm);
+ setStatus('Baixando o boletim oficial da seção…');
+ const response=await fetch(fileURL,{cache:'no-store',headers:{Accept:'application/octet-stream, application/json'}});
+ if(!response.ok)throw Error('O TSE localizou o inventário, mas o download do BU respondeu HTTP '+response.status+'.');
+ const bytes=new Uint8Array(await response.arrayBuffer());
+ if(!bytes.length)throw Error('O arquivo oficial do BU veio vazio.');
+ const decoded=decodeBuSection(bytes,{municipality:Number(m),zone:Number(z),section:Number(ss),election:Number(e.cd),cargo:Number(cargo)});
+ // Carrega nomes/siglas do resultado oficial agregado apenas como dicionário; votos vêm exclusivamente do BU da seção.
+ let official=null,meta={candidate:new Map(),party:new Map()},officialURL='';
+ try{
+  officialURL=makeResultURL(e,uf,mun,'',cargo);official=await getJSON(officialURL);meta=identifyCandidateMeta(official,cargo);
+ }catch(err){console.warn('[Mapa eleitoral] Não foi possível obter o dicionário oficial de candidatos:',err)}
+ const typeName={1:'Voto nominal',2:'Branco',3:'Nulo',4:'Voto de legenda',5:'Cargo sem candidato'};
+ const rows=decoded.rows.map(v=>{
+  const c=v.number==null?null:meta.candidate.get(String(v.number));
+  const party=c?.party||(v.party==null?'':meta.party.get(String(v.party))||'');
+  const label=v.type===2?'Voto branco':v.type===3?'Voto nulo':v.type===5?'Cargo sem candidato':v.type===4?'Legenda '+(v.number==null?'':v.number):c?.name||('Número '+(v.number==null?'—':v.number));
+  return {type:v.type,label,party:party||'—',number:v.number,votes:v.votes};
+ }).sort((a,b)=>b.votes-a.votes);
+ const turnout=decoded.rows.filter(v=>v.type===1||v.type===2||v.type===3||v.type===4).reduce((a,v)=>a+v.votes,0);
+ const totalVotes=rows.reduce((a,v)=>a+v.votes,0);
+ $('tseLiveResultado').innerHTML='<div class="card" style="padding:12px;margin:10px 0"><h4>Resultado por seção — Boletim de Urna oficial</h4><p><strong>Município TSE:</strong> '+esc(m)+' · <strong>Zona:</strong> '+esc(zz)+' · <strong>Seção:</strong> '+esc(ss)+' · <strong>Local TSE:</strong> '+esc(decoded.sectionInfo.local??'não informado')+'</p><div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Eleitores aptos</small><h3>'+Number(decoded.aptos||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos registrados no cargo</small><h3>'+totalVotes.toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos por tipo somados</small><h3>'+turnout.toLocaleString('pt-BR')+'</h3></div></div><p style="font-size:12px;color:#555">Os votos abaixo foram decodificados do arquivo BU publicado pelo TSE. Nome e partido, quando disponíveis, são associados ao resultado oficial agregado; a quantidade vem do BU da seção.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px">Tipo</th><th style="text-align:left;padding:8px">Número / votável</th><th style="text-align:left;padding:8px">Candidato / voto</th><th style="text-align:left;padding:8px">Partido</th><th style="text-align:right;padding:8px">Votos</th></tr></thead><tbody>'+rows.map(v=>'<tr><td style="padding:8px;border-top:1px solid #ddd">'+esc(typeName[v.type]||'Tipo '+v.type)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.number??'—')+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.label)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.party)+'</td><td style="padding:8px;text-align:right;border-top:1px solid #ddd"><strong>'+v.votes.toLocaleString('pt-BR')+'</strong></td></tr>').join('')+'</tbody></table></div><p style="font-size:12px">Fonte primária: <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">BU oficial do TSE</a> · <a href="'+esc(auxURL)+'" target="_blank" rel="noopener">Inventário oficial da seção</a>'+(officialURL?' · <a href="'+esc(officialURL)+'" target="_blank" rel="noopener">Referência oficial de candidatos e totalização</a>':'')+'</p><button type="button" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button></div>';
+ setStatus('BU oficial decodificado e seção validada. Os votos exibidos vieram do arquivo da seção, não do agregado da zona.');
 }
 document.addEventListener('DOMContentLoaded',()=>{inject();setInterval(inject,1000)});
 })();
