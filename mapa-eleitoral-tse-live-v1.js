@@ -201,55 +201,60 @@ function decodeBuSection(bytes,expected){
  const envelopeRoots=berChildren(bytes);
  const envelope=envelopeRoots.find(n=>n.tagNo===16&&n.constructed)||envelopeRoots[0];
  if(!envelope)throw Error('O arquivo não contém um envelope ASN.1 válido.');
- const env=sequenceItems(envelope);
- // EntidadeEnvelopeGenerico: conteúdo é o OCTET STRING final; nunca interpretar bytes cifrados como BU.
- const content=envelope.children.find(n=>n.tagClass===0&&n.tagNo===4);
+ const content=sequenceItems(envelope).find(n=>n.tagClass===0&&n.tagNo===4);
  if(!content||!content.raw||!content.raw.length)throw Error('O envelope oficial não contém o conteúdo do BU.');
  const roots=berChildren(content.raw);
  const root=roots.find(n=>n.tagNo===16&&n.constructed)||roots[0];
  if(!root)throw Error('O conteúdo do arquivo não contém uma estrutura de BU válida.');
- const nodes=sequenceItems(root);
- // Especificação TSE v2 (2024+): identificaçãoSecao é o 4º campo do BU.
- const ident=nodes[3];
- if(!ident||ident.tagNo!==16||!ident.constructed)throw Error('Estrutura do BU incompatível com a especificação v2 do TSE.');
+ const nodes=sequenceItems(root),ident=nodes[3];
+ if(!ident||ident.tagNo!==16||!ident.constructed)throw Error('Estrutura do BU incompatível com a especificação do TSE.');
  const idc=sequenceItems(ident),mz=sequenceItems(idc[0]);
  const sectionInfo={municipality:firstInt(mz[0]),zone:firstInt(mz[1]),local:firstInt(idc[1]),section:firstInt(idc[2])};
  if([sectionInfo.municipality,sectionInfo.zone,sectionInfo.section].some(v=>v===null))throw Error('O BU não contém identificação completa de município, zona e seção.');
  if(String(sectionInfo.municipality)!==String(Number(expected.municipality))||String(sectionInfo.zone)!==String(Number(expected.zone))||String(sectionInfo.section)!==String(Number(expected.section))){
   throw Error('O BU retornado não corresponde ao município/zona/seção selecionados. Nenhum voto foi exibido.');
  }
- // resultadosVotacaoPorEleicao é a sequência de eleições depois dos campos opcionais.
- const electionsNode=nodes.find(n=>n.tagNo===16&&n.constructed&&sequenceItems(n).some(x=>x.tagNo===16&&x.constructed&&sequenceItems(x).length>=5&&sequenceItems(x)[0]?.tagClass===2&&sequenceItems(x)[0]?.tagNo===3));
+ // ASN.1 v1 (2022): resultadosVotacaoPorEleicao usa o campo [3].
+ // ASN.1 v2 (2024+): o campo passou a ser uma SEQUENCE OF sem tag de campo.
+ const isV1=nodes.some(n=>n.tagClass===2&&n.tagNo===3&&n.constructed);
+ const electionsNode=isV1
+  ?nodes.find(n=>n.tagClass===2&&n.tagNo===3&&n.constructed)
+  :nodes.find(n=>n.tagClass===0&&n.tagNo===16&&n.constructed&&sequenceItems(n).some(x=>{
+    const c=sequenceItems(x);return c.length>=5&&c[0]?.tagClass===2&&c[0]?.tagNo===3;
+   }));
  if(!electionsNode)throw Error('Não encontrei a lista de resultados por eleição no BU.');
  const electionNode=sequenceItems(electionsNode).find(n=>{
-  const c=sequenceItems(n);return c.length>=5&&firstInt(c[0])===Number(expected.election);
+  const c=sequenceItems(n);return c.length>=(isV1?3:5)&&firstInt(c[0])===Number(expected.election);
  });
  if(!electionNode)throw Error('O BU foi validado, mas não contém a eleição selecionada. Confirme eleição/turno.');
  const ec=sequenceItems(electionNode),aptos=firstInt(ec[1]);
- const resultsNode=ec.find(n=>n.tagNo===16&&n.constructed&&sequenceItems(n).some(r=>{
+ const resultsNode=isV1?ec[2]:ec.find(n=>n.tagClass===0&&n.tagNo===16&&n.constructed&&sequenceItems(n).some(r=>{
   const rc=sequenceItems(r);return rc.length>=3&&[1,2,3].includes(firstInt(rc[0]))&&rc[2]?.tagNo===16&&rc[2]?.constructed;
  }));
- if(!resultsNode)throw Error('A eleição foi localizada, mas a estrutura de resultados do BU não foi reconhecida.');
+ if(!resultsNode||!resultsNode.constructed)throw Error('A eleição foi localizada, mas a estrutura de resultados do BU não foi reconhecida.');
  const cargoResults=[];
  sequenceItems(resultsNode).forEach(r=>{
   const rc=sequenceItems(r);if(rc.length<3)return;
-  const totalNodes=sequenceItems(rc[2]);
-  totalNodes.forEach(tn=>{
+  const totalNode=rc.find(n=>n.tagClass===0&&n.tagNo===16&&n.constructed&&sequenceItems(n).some(t=>{
+   const tc=sequenceItems(t);return tc.length>=3&&tc[0]?.tagClass===2&&tc[0]?.tagNo===1;
+  }));
+  if(!totalNode)return;
+  sequenceItems(totalNode).forEach(tn=>{
    const t=sequenceItems(tn);if(t.length<3)return;
    const cargoCode=firstInt(t[0]);if(String(cargoCode)!==String(expected.cargo))return;
-   sequenceItems(t[2]).forEach(v=>{
+   const votesNode=t[2];if(!votesNode||!votesNode.constructed)return;
+   sequenceItems(votesNode).forEach(v=>{
     const vv=sequenceItems(v);if(vv.length<4)return;
     const type=firstInt(vv.find(x=>x.tagClass===2&&x.tagNo===1));
     const votes=firstInt(vv.find(x=>x.tagClass===2&&x.tagNo===2));
     if(type===null||votes===null)return;
     const id=vv.find(x=>x.tagClass===2&&x.tagNo===3&&x.constructed),idc=sequenceItems(id);
-    // IdentificacaoVotavel na spec: partido primeiro, código do candidato em segundo.
     cargoResults.push({type,votes,party:idc.length?firstInt(idc[0]):null,number:idc.length>1?firstInt(idc[1]):null});
    });
   });
  });
  if(!cargoResults.length)throw Error('O BU foi lido, mas não contém votos reconhecíveis para o cargo selecionado. Nenhum número estimado foi exibido.');
- return {sectionInfo,aptos,rows:cargoResults,total:cargoResults.reduce((a,v)=>a+v.votes,0)};
+ return {sectionInfo,aptos,rows:cargoResults,total:cargoResults.reduce((a,v)=>a+v.votes,0),specVersion:isV1?'v1':'v2'};
 }
 async function querySection(e,uf,mun,zone,section,cargo){
  const z=String(zone||'').replace(/\D/g,'');if(!z)throw Error('Para consultar uma seção, informe também a zona eleitoral.');
@@ -264,7 +269,11 @@ async function querySection(e,uf,mun,zone,section,cargo){
  const totalized=usable.filter(h=>String(h.st||'').toLowerCase().startsWith('totalizad'));
  const chosen=totalized[totalized.length-1]||usable[usable.length-1];
  if(!chosen)throw Error('O TSE não publicou um BU utilizável para esta seção. Pode ser seção agregada, não instalada ou ainda não totalizada.');
- const file=(chosen.arq||[]).filter(a=>(String(a.tp||'').toLowerCase()==='bu'||String(a.tp||'').toLowerCase()==='busa')&&a.nm).slice(-1)[0];
+ const arq=Array.isArray(chosen.arq)?chosen.arq:[];
+ const fromArq=arq.filter(a=>['bu','busa'].includes(String(a.tp||'').toLowerCase())&&a.nm).slice(-1)[0];
+ const oldNames=Array.isArray(chosen.nmarq)?chosen.nmarq:[];
+ const oldName=oldNames.filter(n=>/\.(?:bu|busa)$/i.test(String(n))).slice(-1)[0];
+ const file=fromArq||(oldName?{tp:/\.busa$/i.test(oldName)?'busa':'bu',nm:oldName}:null);
  if(!file)throw Error('O inventário oficial da seção não contém arquivo BU. Nenhum resultado foi estimado.');
  // O arquivo fica dentro da pasta do hash da urna; omitir esse nível gera HTTP 404.
  const fileURL=BASE+'/oficial/'+e.cycle+'/arquivo-urna/'+pleito+'/dados/'+state+'/'+m+'/'+zz+'/'+ss+'/'+encodeURIComponent(chosen.hash)+'/'+encodeURIComponent(file.nm);
