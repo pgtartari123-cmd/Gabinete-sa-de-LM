@@ -16,7 +16,7 @@ function csv(text){text=text.replace(/^\uFEFF/,'');const first=text.split(/\r?\n
 function pick(o,names){for(const n of names){const v=o[norm(n).replace(/[^a-z0-9_]/g,'')];if(v!=null&&v!=='')return v}return''}
 
 function readMapping(){try{return JSON.parse(localStorage.getItem(MAP)||'[]')}catch(e){return[]}}
-function mappingKey(r){return [String(r.uf||'PA').toUpperCase(),String(r.codigo_municipio||''),String(r.zona||'').replace(/\\D/g,'').padStart(3,'0'),String(r.secao||'').replace(/\\D/g,'').padStart(4,'0')].join('|')}
+function mappingKey(r){const code=String(r.codigo_municipio||'');return [String(r.uf||'PA').toUpperCase(),code||norm(r.municipio||''),String(r.zona||'').replace(/\\D/g,'').padStart(3,'0'),String(r.secao||'').replace(/\\D/g,'').padStart(4,'0')].join('|')}
 function mapFromRow(o,meta){
  const uf=String(pick(o,['SG_UF','uf'])||meta.uf||'PA').toUpperCase();
  const municipio=pick(o,['NM_MUNICIPIO','municipio'])||meta.municipio||'';
@@ -26,7 +26,7 @@ function mapFromRow(o,meta){
  const localCode=String(pick(o,['CD_LOCAL_VOTACAO','NR_LOCAL_VOTACAO','codigo_local_votacao','cd_local_votacao'])||'');
  const localName=String(pick(o,['NM_LOCAL_VOTACAO','DS_LOCAL_VOTACAO','local_votacao','nome_local_votacao','nm_local_votacao','ds_local_votacao'])||'');
  if(zone==='000'||section==='0000'||(!localCode&&!localName))return null;
- return {id:[uf,code,zone,section].join('|'),uf,codigo_municipio:code,municipio,zona:zone,secao:section,codigo_local_votacao:localCode||null,local_votacao:localName,origem:'TSE configuração oficial'};
+ return {id:[uf,code||norm(municipio),zone,section].join('|'),uf,codigo_municipio:code,municipio,zona:zone,secao:section,codigo_local_votacao:localCode||null,local_votacao:localName,origem:'TSE configuração oficial'};
 }
 function enrichRow(r){
  const mappings=readMapping();
