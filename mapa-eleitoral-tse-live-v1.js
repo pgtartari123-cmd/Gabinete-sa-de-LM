@@ -275,7 +275,8 @@ async function querySection(e,uf,mun,zone,section,cargo){
  const aux=await getJSON(auxURL);
  const hashes=Array.isArray(aux.hashes)?aux.hashes:[];
  const usable=hashes.filter(h=>Array.isArray(h.arq)&&!/(exclu|cancel|substitu|rejeitad)/i.test(String(h.st||'')));
- const chosen=usable.find(h=>/totalizad/i.test(String(h.st||'')))||usable[usable.length-1];
+ const totalized=usable.filter(h=>/totalizad/i.test(String(h.st||'')));
+ const chosen=totalized[totalized.length-1]||usable[usable.length-1];
  if(!chosen)throw Error('O TSE não publicou um BU utilizável para esta seção. Pode ser seção agregada, não instalada ou ainda não totalizada.');
  const file=(chosen.arq||[]).filter(a=>/^(bu|busa)$/i.test(String(a.tp||''))||/-bu(?:sa)?\.dat$/i.test(String(a.nm||''))).slice(-1)[0];
  if(!file)throw Error('O inventário oficial da seção não contém arquivo BU. Nenhum resultado foi estimado.');
