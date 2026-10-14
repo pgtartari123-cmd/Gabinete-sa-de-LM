@@ -212,12 +212,26 @@ function decodeBuSection(bytes,expected){
  }
  // A eleição é identificada pelo código interno TSE. Não confunde pleito com código da eleição.
  const electionNodes=[];
- function walk(n){if(!n)return;if(n.tagNo===16&&n.constructed){const c=sequenceItems(n);if(c.length>=4&&firstInt(c[0])===Number(expected.election)&&sequenceItems(c[3]).length)electionNodes.push(n)}sequenceItems(n).forEach(walk)}
+ function isResultsContainer(n){
+  const items=sequenceItems(n);
+  return items.length>0&&items.some(r=>{const rc=sequenceItems(r);return rc.length>=3&&[1,2,3].includes(firstInt(rc[0]))&&sequenceItems(rc[2]).length>0});
+ }
+ function walk(n){
+  if(!n)return;
+  if(n.tagNo===16&&n.constructed){
+   const c=sequenceItems(n);
+   if(c.length>=3&&firstInt(c[0])===Number(expected.election)){
+    const container=c.find(isResultsContainer);
+    if(container)electionNodes.push({node:n,container});
+   }
+  }
+  sequenceItems(n).forEach(walk);
+ }
  walk(root);
- const electionNode=electionNodes[0];
- if(!electionNode)throw Error('O BU foi validado, mas não contém a eleição selecionada. Confirme eleição/turno.');
- const ec=sequenceItems(electionNode), aptos=firstInt(ec[1]);
- const results=sequenceItems(ec[3]), cargoResults=[];
+ const found=electionNodes[0];
+ if(!found)throw Error('O BU foi validado, mas não contém a eleição selecionada ou usa uma estrutura ainda não reconhecida. Confirme eleição/turno.');
+ const ec=sequenceItems(found.node), aptos=firstInt(ec[1]);
+ const results=sequenceItems(found.container), cargoResults=[];
  results.forEach(r=>{
   const rc=sequenceItems(r);if(rc.length<3)return;
   const totalNodes=sequenceItems(rc[2]);
@@ -271,8 +285,14 @@ async function querySection(e,uf,mun,zone,section,cargo){
  }).sort((a,b)=>b.votes-a.votes);
  const turnout=decoded.rows.filter(v=>v.type===1||v.type===2||v.type===3||v.type===4).reduce((a,v)=>a+v.votes,0);
  const totalVotes=rows.reduce((a,v)=>a+v.votes,0);
- $('tseLiveResultado').innerHTML='<div class="card" style="padding:12px;margin:10px 0"><h4>Resultado por seção — Boletim de Urna oficial</h4><p><strong>Município TSE:</strong> '+esc(m)+' · <strong>Zona:</strong> '+esc(zz)+' · <strong>Seção:</strong> '+esc(ss)+' · <strong>Local TSE:</strong> '+esc(decoded.sectionInfo.local??'não informado')+'</p><div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Eleitores aptos</small><h3>'+Number(decoded.aptos||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos registrados no cargo</small><h3>'+totalVotes.toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos por tipo somados</small><h3>'+turnout.toLocaleString('pt-BR')+'</h3></div></div><p style="font-size:12px;color:#555">Os votos abaixo foram decodificados do arquivo BU publicado pelo TSE. Nome e partido, quando disponíveis, são associados ao resultado oficial agregado; a quantidade vem do BU da seção.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px">Tipo</th><th style="text-align:left;padding:8px">Número / votável</th><th style="text-align:left;padding:8px">Candidato / voto</th><th style="text-align:left;padding:8px">Partido</th><th style="text-align:right;padding:8px">Votos</th></tr></thead><tbody>'+rows.map(v=>'<tr><td style="padding:8px;border-top:1px solid #ddd">'+esc(typeName[v.type]||'Tipo '+v.type)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.number??'—')+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.label)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.party)+'</td><td style="padding:8px;text-align:right;border-top:1px solid #ddd"><strong>'+v.votes.toLocaleString('pt-BR')+'</strong></td></tr>').join('')+'</tbody></table></div><p style="font-size:12px">Fonte primária: <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">BU oficial do TSE</a> · <a href="'+esc(auxURL)+'" target="_blank" rel="noopener">Inventário oficial da seção</a>'+(officialURL?' · <a href="'+esc(officialURL)+'" target="_blank" rel="noopener">Referência oficial de candidatos e totalização</a>':'')+'</p><button type="button" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button></div>';
+ $('tseLiveResultado').innerHTML='<div class="card" style="padding:12px;margin:10px 0"><h4>Resultado por seção — Boletim de Urna oficial</h4><p><strong>Município TSE:</strong> '+esc(m)+' · <strong>Zona:</strong> '+esc(zz)+' · <strong>Seção:</strong> '+esc(ss)+' · <strong>Local TSE:</strong> '+esc(decoded.sectionInfo.local??'não informado')+'</p><div class="painel-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))"><div class="card"><small>Eleitores aptos</small><h3>'+Number(decoded.aptos||0).toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos registrados no cargo</small><h3>'+totalVotes.toLocaleString('pt-BR')+'</h3></div><div class="card"><small>Votos por tipo somados</small><h3>'+turnout.toLocaleString('pt-BR')+'</h3></div></div><p style="font-size:12px;color:#555">Os votos abaixo foram decodificados do arquivo BU publicado pelo TSE. Nome e partido, quando disponíveis, são associados ao resultado oficial agregado; a quantidade vem do BU da seção.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px">Tipo</th><th style="text-align:left;padding:8px">Número / votável</th><th style="text-align:left;padding:8px">Candidato / voto</th><th style="text-align:left;padding:8px">Partido</th><th style="text-align:right;padding:8px">Votos</th></tr></thead><tbody>'+rows.map(v=>'<tr><td style="padding:8px;border-top:1px solid #ddd">'+esc(typeName[v.type]||'Tipo '+v.type)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.number??'—')+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.label)+'</td><td style="padding:8px;border-top:1px solid #ddd">'+esc(v.party)+'</td><td style="padding:8px;text-align:right;border-top:1px solid #ddd"><strong>'+v.votes.toLocaleString('pt-BR')+'</strong></td></tr>').join('')+'</tbody></table></div><p style="font-size:12px">Fonte primária: <a href="'+esc(fileURL)+'" target="_blank" rel="noopener">BU oficial do TSE</a> · <a href="'+esc(auxURL)+'" target="_blank" rel="noopener">Inventário oficial da seção</a>'+(officialURL?' · <a href="'+esc(officialURL)+'" target="_blank" rel="noopener">Referência oficial de candidatos e totalização</a>':'')+'</p><button type="button" onclick="window.__imprimirMapaSecao && window.__imprimirMapaSecao()">🖨️ Imprimir / Salvar PDF</button></div>';
  setStatus('BU oficial decodificado e seção validada. Os votos exibidos vieram do arquivo da seção, não do agregado da zona.');
 }
+window.__imprimirMapaSecao=function(){
+ const source=$('tseLiveResultado');if(!source)return;
+ const w=window.open('','_blank');if(!w){setStatus('Permita a abertura da janela de impressão para salvar em PDF.');return}
+ const clone=source.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.remove());
+ w.document.open();w.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Mapa eleitoral — resultado por seção</title><style>body{font:14px Arial,sans-serif;color:#111;padding:22px}h4{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #bbb;padding:7px;text-align:left}th:last-child,td:last-child{text-align:right}.card{padding:10px}a{color:#111;text-decoration:none}@media print{body{padding:0}}</style></head><body><h2>Gabinete Online — Mapa eleitoral</h2>'+clone.innerHTML+'</body></html>');w.document.close();w.focus();w.print();
+};
 document.addEventListener('DOMContentLoaded',()=>{inject();setInterval(inject,1000)});
 })();
