@@ -47,7 +47,7 @@ function inject(){
  section.insertBefore(panel,section.firstChild);
  $('tseLiveAno').addEventListener('change',()=>{renderElections();loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveEleicao').addEventListener('change',()=>{loadMunicipalities().then(loadOffices).catch(showError)});
- $('tseLiveUF').addEventListener('change',()=>loadMunicipalities().catch(showError));
+ $('tseLiveUF').addEventListener('change',()=>{renderElections();loadMunicipalities().then(loadOffices).catch(showError)});
  $('tseLiveBuscaMunicipio').addEventListener('input',filterMunicipalities);
  $('tseLiveConsultar').addEventListener('click',queryResults);
  $('tseLiveCandidato').addEventListener('input',()=>{if(typeof window.__sectionRowsFilter==='function')window.__sectionRowsFilter();else if(lastResult)renderResult(lastResult)});
@@ -68,14 +68,24 @@ async function boot(){
  setStatus('Conexão com a configuração oficial do TSE concluída. Escolha os filtros e consulte.');
  }catch(e){showError(e)}
 }
+function electionHasUF(e,uf){
+ const areas=Array.isArray(e?.abr)?e.abr:[];
+ if(!areas.length)return true;
+ return areas.some(a=>String(a.cd||'').toUpperCase()===String(uf||'').toUpperCase()||String(a.cd||'').toLowerCase()==='br');
+}
 function renderElections(){
- const year=$('tseLiveAno').value;
- const list=elections.filter(e=>electionYear(e)===year);
- // Não restringir o nome a “eleição ordinária”: o TSE pode rotular pleitos recentes como eleição geral ou por cargo.
- $('tseLiveEleicao').innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
- $('tseLiveEleicao').disabled=!list.length;
+ const year=$('tseLiveAno').value,uf=$('tseLiveUF').value,select=$('tseLiveEleicao');
+ const previous=select.value;
+ const yearList=elections.filter(e=>electionYear(e)===year);
+ const list=yearList.filter(e=>electionHasUF(e,uf));
+ // Não misturar eleições suplementares de outros estados com o estado selecionado.
+ // Se o TSE não informar abrangência no arquivo de configuração, manter o registro disponível.
+ select.innerHTML=list.map(e=>'<option value="'+esc(e.cd)+'">'+esc(displayElection(e))+'</option>').join('');
+ select.disabled=!list.length;
+ if(!list.length){select.innerHTML='<option value="">Nenhuma eleição encontrada para este estado/ano</option>';return;}
+ if(list.some(e=>String(e.cd)===previous)){select.value=previous;return;}
  const preferred=list.find(e=>String(e.t)==='1'&&/eleicao ordinaria estadual/i.test(e.nm))||list.find(e=>String(e.t)==='1'&&/eleicao ordinaria municipal/i.test(e.nm))||list[0];
- if(preferred)$('tseLiveEleicao').value=String(preferred.cd);
+ select.value=String(preferred.cd);
 }
 async function loadMunicipalities(){
  const e=selectedElection();if(!e)return;
