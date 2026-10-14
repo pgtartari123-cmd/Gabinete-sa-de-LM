@@ -219,7 +219,7 @@ function decodeBuSection(bytes,expected){
   throw Error('O BU retornado não corresponde ao município/zona/seção selecionados. Nenhum voto foi exibido.');
  }
  // resultadosVotacaoPorEleicao é a sequência de eleições depois dos campos opcionais.
- const electionsNode=nodes.find(n=>n.tagNo===16&&n.constructed&&sequenceItems(n).some(x=>x.tagNo===16&&x.constructed&&sequenceItems(x).length>=5&&sequenceItems(x)[0]?.tagNo===0x83));
+ const electionsNode=nodes.find(n=>n.tagNo===16&&n.constructed&&sequenceItems(n).some(x=>x.tagNo===16&&x.constructed&&sequenceItems(x).length>=5&&sequenceItems(x)[0]?.tagClass===2&&sequenceItems(x)[0]?.tagNo===3));
  if(!electionsNode)throw Error('Não encontrei a lista de resultados por eleição no BU.');
  const electionNode=sequenceItems(electionsNode).find(n=>{
   const c=sequenceItems(n);return c.length>=5&&firstInt(c[0])===Number(expected.election);
