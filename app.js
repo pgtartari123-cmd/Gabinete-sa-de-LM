@@ -35,4 +35,4 @@ function __gabineteAtualizarDaStorage(raw){
   }catch(e){console.warn('Sincronização visual do Gabinete:',e)}
 }
 window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)__gabineteAtualizarDaStorage(e.newValue)});
-window.addEventListener('gabinete:dados-atualizados',()=>__gabineteAtualizarDaStorage());
+window.addEventListener('gabinete:dados-atualizados',()=>{if(window.__gabineteCentralWriting)return;__gabineteAtualizarDaStorage()});
