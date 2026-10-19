@@ -44,6 +44,6 @@ function toast(m){let e=document.getElementById('gabineteToast');if(!e){e=docume
 window.GabineteDB=window.GabineteDB||{};async function receberAtualizacoes(){if(lockAtivo())return null;set.call(localStorage,LOCK,String(Date.now()));try{const remote=await downloadRemote();const local=read();const freshest=read();const merged={people:mergePeople(freshest.people,remote.people),agenda:mergeAgenda(freshest.agenda,remote.agenda)};const changed=writeIfChanged(merged);if(changed){window.render?.();window.renderDemandas?.();window.renderAgenda?.();window.renderBirthdays?.();window.atualizarPainel?.()}return{people:merged.people.length}}catch(e){console.warn('[Gabinete LM] Atualização automática:',e);return null}finally{remove.call(localStorage,LOCK)}}
 window.GabineteDB.sincronizar=sincronizar;window.GabineteDB.atualizarAgora=sincronizar;window.GabineteDB.renovarSessao=refreshSession;window.GabineteDB.receberAtualizacoes=receberAtualizacoes;
 const wake=()=>{clearTimeout(window.__gabineteWakeSync);window.__gabineteWakeSync=setTimeout(()=>sincronizar(),250)};
-setTimeout(()=>sincronizar(),1800);setInterval(()=>{if(!lockAtivo())receberAtualizacoes()},8000);
+setTimeout(()=>sincronizar(),1800);setInterval(()=>{if(!document.hidden&&!lockAtivo())receberAtualizacoes()},30000);
 window.addEventListener('online',wake);window.addEventListener('focus',()=>{if(!lockAtivo())wake()});window.addEventListener('pageshow',()=>{if(!lockAtivo())wake()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!lockAtivo())wake()});
 })();
