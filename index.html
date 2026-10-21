@@ -3,7 +3,7 @@
  'use strict';
  if(!('serviceWorker' in navigator)) return;
  window.addEventListener('load',function(){
-  navigator.serviceWorker.register('./sw.js?v=82',{scope:'./',updateViaCache:'none'}).then(function(reg){
+  navigator.serviceWorker.register('./sw.js?v=83',{scope:'./',updateViaCache:'none'}).then(function(reg){
    reg.update().catch(function(){});
    reg.addEventListener('updatefound',function(){
     var worker=reg.installing;if(!worker)return;
