@@ -43,7 +43,7 @@
     };
     fn.__lmDeleteSync=true;window.excluirCadastro=fn;
   }
-  function carregarCamposFinais(){if(document.getElementById('dadosCidadaoFinalScript'))return;const s=document.createElement('script');s.id='dadosCidadaoFinalScript';s.src='./dados-cidadao-final-v1.js?v=1001';s.async=false;(document.head||document.documentElement).appendChild(s)}
+  function carregarCamposFinais(){if(document.getElementById('dadosCidadaoFinalScript'))return;const s=document.createElement('script');s.id='dadosCidadaoFinalScript';s.src='./dados-cidadao-final-v1.js?v=1002';s.async=false;(document.head||document.documentElement).appendChild(s)}
   function run(){limparTestesLocais();const f=document.getElementById('formCadastro');if(!f)return;removeDuplicados(f);dataDigitavel(f);carregarCamposFinais();sincronizarExclusao()}
   document.addEventListener('DOMContentLoaded',run,{once:true});
   const obs=new MutationObserver(run);obs.observe(document.documentElement,{childList:true,subtree:true});
