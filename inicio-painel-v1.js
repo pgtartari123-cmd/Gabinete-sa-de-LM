@@ -39,7 +39,7 @@
 
   function comprarGabineteLM(){
     try{
-      window.location.href='./pagamento.html?v=2002';
+      window.location.href='./pagamento.html?v=2003';
     }catch(e){
       console.error(e);
       avisar('⚠️ Não foi possível abrir a página de pagamento.');
