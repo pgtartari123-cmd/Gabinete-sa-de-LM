@@ -72,7 +72,24 @@ function renderDemandasCorrigido(){
   }).join('')||'<div class="card vazio"><h3>Nenhuma demanda encontrada</h3><p>Altere os filtros ou cadastre uma nova demanda.</p></div>';
 }
 
+let __pessoasUltimoScroll=0;
+let __pessoasRenderTimer=null;
+document.addEventListener('scroll',function(){
+  if(document.getElementById('pessoas')?.style.display!=='none'){
+    __pessoasUltimoScroll=Date.now();
+  }
+},true);
+
 function renderPessoasCorrigido(){
+  if(document.getElementById('pessoas')?.style.display!=='none'&&Date.now()-__pessoasUltimoScroll<1400){
+    if(!__pessoasRenderTimer){
+      __pessoasRenderTimer=setTimeout(function(){
+        __pessoasRenderTimer=null;
+        try{renderPessoasCorrigido()}catch(e){console.warn('[Gabinete LM] atualização adiada:',e)}
+      },1450);
+    }
+    return;
+  }
   if(typeof db==='undefined'||!Array.isArray(db.people))return;
   const c=document.getElementById('listaPessoas');if(!c)return;
   const busca=String(document.getElementById('buscaPessoa')?.value||'').toLowerCase().trim();
