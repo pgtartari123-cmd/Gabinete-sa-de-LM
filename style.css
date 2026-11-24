@@ -354,3 +354,12 @@ button:focus-visible{outline:3px solid rgba(232,62,145,.38)!important;outline-of
 @media(prefers-reduced-motion:reduce){
  .card,button{transition:none!important}
 }
+
+
+/* Banner institucional com galeria de ações ao centro e retrato da vereadora à direita */
+.hero-trabalho{background:#101b35 url('gabinete-banner-final.webp?v=20261124') center/cover no-repeat!important;}
+.hero-trabalho:before,.hero-trabalho:after{display:none!important;}
+.hero-texto{position:relative;z-index:1;max-width:43%;}
+.hero-trabalho h3{ text-shadow:0 2px 12px rgba(0,0,0,.28); }
+.hero-trabalho p{ text-shadow:0 1px 8px rgba(0,0,0,.35); }
+@media(max-width:700px){.hero-trabalho{background-position:center!important;}.hero-texto{max-width:48%;}.hero-trabalho h3{font-size:clamp(22px,6vw,34px)!important;}.hero-trabalho p{font-size:12px!important;}}
